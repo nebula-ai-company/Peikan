@@ -42,6 +42,56 @@ export const USERS: User[] = [
   }
 ];
 
+export const ALL_CONTACTS: User[] = [
+  ...USERS,
+  {
+    id: 'u5',
+    name: 'محسن چاوشی',
+    avatar: 'https://picsum.photos/id/338/200/200',
+    status: 'online',
+    bio: 'مدیر هنری',
+    lastSeen: 'همین الان'
+  },
+  {
+    id: 'u6',
+    name: 'همایون شجریان',
+    avatar: 'https://picsum.photos/id/334/200/200',
+    status: 'offline',
+    bio: 'موسیقی سنتی',
+    lastSeen: '۲ ساعت پیش'
+  },
+  {
+    id: 'u7',
+    name: 'پشتیبانی فنی',
+    avatar: 'https://picsum.photos/id/447/200/200',
+    status: 'busy',
+    bio: 'پاسخگویی ۲۴ ساعته'
+  },
+  {
+    id: 'u8',
+    name: 'علی کریمی',
+    avatar: 'https://picsum.photos/id/433/200/200',
+    status: 'online',
+    bio: 'بازیکن فوتبال'
+  },
+  {
+    id: 'u9',
+    name: 'مهتاب کرامتی',
+    avatar: 'https://picsum.photos/id/325/200/200',
+    status: 'away',
+    bio: 'سفیر یونیسف',
+    lastSeen: '۵ دقیقه پیش'
+  },
+   {
+    id: 'u10',
+    name: 'امید نعمتی',
+    avatar: 'https://picsum.photos/id/238/200/200',
+    status: 'offline',
+    bio: 'گروه پالت',
+    lastSeen: '۳ روز پیش'
+  }
+];
+
 export const MOCK_CHATS: Chat[] = [
   {
     id: 'c1',

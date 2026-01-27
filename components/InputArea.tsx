@@ -1,6 +1,94 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Smile, Paperclip, Mic, Send, X } from 'lucide-react';
+import { Smile, Paperclip, Mic, Send, X, Image as ImageIcon, FileText, Camera, MapPin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+
+const EMOJI_CATEGORIES = [
+  {
+    name: 'شکلک‌ها و احساسات',
+    emojis: ['😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂', '🙂', '🙃', '😉', '😊', '😇', '🥰', '😍', '🤩', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🥸', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕', '🤑', '🤠', '😈', '👿', '👹', '👺', '🤡', '💩', '👻', '💀', '☠️', '👽', '👾', '🤖', '🎃']
+  },
+  {
+    name: 'دست‌ها و بدن',
+    emojis: ['👋', '🤚', '🖐', '✋', '🖖', '👌', '🤌', '🤏', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉', '👆', '🖕', '👇', '☝️', '👍', '👎', '✊', '👊', '🤛', '🤜', '👏', '🙌', '👐', '🤲', '🤝', '🙏', '✍️', '💅', '🤳', '💪', '🦵', '🦶', '👂', '🦻', '👃', '🧠', '🫀', '🫁', '🦷', '🦴', '👀', '👁', '👅', '👄', '💋', '🩸']
+  },
+  {
+    name: 'قلب‌ها و نمادها',
+    emojis: ['💘', '💝', '💖', '💗', '💓', '💞', '💕', '💟', '❣️', '💔', '❤️', '🧡', '💛', '💚', '💙', '💜', '🤎', '🖤', '🤍', '💯', '💢', '💥', '💫', '💦', '💨', '🕳', '💣', '💬', '👁️‍🗨️', '🗨', '🗯', '💭', '💤']
+  },
+  {
+      name: 'طبیعت و حیوانات',
+      emojis: ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐽', '🐸', '🐵', '🐔', '🐧', '🐦', '🐤', '🐣', '🐥', '🦆', '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋', '🐌', '🐞', '🐜', '🦟', '🦗', '🕷', '🕸', '🦂', '🐢', '🐍', '🦎', '🦖', '🦕', '🐙', '🦑', '🦐', '🦞', '🦀', '🐡', '🐠', '🐟', '🐬', '🐳', '🐋', '🦈', '🐊', '🐅', '🐆', '🦓', '🦍', '🦧', '🦣', '🐘', '🦛', '🦏', '🐪', '🐫', '🦒', '🦘', '🦬', '🐃', '🐂', '🐄', '🐎', '🐖', '🐏', '🐑', '🦙', '🐐', '🦌', '🐕', '🐩', '🦮', '🐕‍🦺', '🐈', '🐈‍⬛', '🐓', '🦃', '🦚', '🦜', '🦢', '🦩', '🕊', '🐇', '🦝', '🦨', '🦡', '🦫', '🦦', '🦥', '🐁', '🐀', '🐿', '🦔', '🐾', '🐉', '🐲']
+  },
+  {
+      name: 'غذا و نوشیدنی',
+      emojis: ['🍇', '🍈', '🍉', '🍊', '🍋', '🍌', '🍍', '🥭', '🍎', '🍏', '🍐', '🍑', '🍒', '🍓', '🫐', '🥝', '🍅', '🫒', '🥥', '🥑', '🍆', '🥔', '🥕', '🌽', '🌶', '🫑', '🥒', '🥬', '🥦', '🧄', '🧅', '🍄', '🥜', '🌰', '🍞', '🥐', '🥖', '🫓', '🥨', '🥯', '🥞', '🧇', '🧀', '🍖', '🍗', '🥩', '🥓', '🍔', '🍟', '🍕', '🌭', '🥪', '🌮', '🌯', '🫔', '🥙', '🧆', '🥚', '🍳', '🥘', '🍲', '🫕', '🥣', '🥗', '🍿', '🧈', '🧂', '🥫', '🍱', '🍘', '🍙', '🍚', '🍛', '🍜', '🍝', '🍠', '🍢', '🍣', '🍤', '🍥', '🥮', '🍡', '🥟', '🥠', '🥡', '🍦', '🍧', '🍨', '🍩', '🍪', '🎂', '🍰', '🧁', '🥧', '🍫', '🍬', '🍭', '🍮', '🍯', '🍼', '🥛', '☕', '🫖', '🍵', '🍶', '🍾', '🍷', '🍸', '🍹', '🍺', '🍻', '🥂', '🥃', '🥤', '🧋', '🧃', '🧉', '🧊', '🥢', '🍽', '🍴', '🥄']
+  },
+  {
+      name: 'فعالیت‌ها',
+      emojis: ['⚽', '🏀', '🏈', '⚾', '🥎', '🎾', '🏐', '🏉', '🥏', '🎱', '🪀', '🏓', '🏸', '🏒', '🏑', '🥍', '🏏', '🪃', '🥅', '⛳', '🪁', '🏹', '🎣', '🤿', '🥊', '🥋', '🎽', '🛹', '🛼', '🛷', '⛸', '🥌', '🎿', '⛷', '🏂', '🪂', '🏋️‍♀️', '🏋', '🏋️‍♂️', '🤼‍♀️', '🤼', '🤼‍♂️', '🤸‍♀️', '🤸', '🤸‍♂️', '⛹️‍♀️', '⛹', '⛹️‍♂️', '🤺', '🤾‍♀️', '🤾', '🤾‍♂️', '🏌️‍♀️', '🏌', '🏌️‍♂️', '🏇', '🧘‍♀️', '🧘', '🧘‍♂️', '🏄‍♀️', '🏄', '🏄‍♂️', '🏊‍♀️', '🏊', '🏊‍♂️', '🤽‍♀️', '🤽', '🤽‍♂️', '🚣‍♀️', '🚣', '🚣‍♂️', '🧗‍♀️', '🧗', '🧗‍♂️', '🚵‍♀️', '🚵', '🚵‍♂️', '🚴‍♀️', '🚴', '🚴‍♂️', '🏆', '🥇', '🥈', '🥉', '🏅', '🎖', '🏵', '🎗', '🎫', '🎟', '🎪', '🤹', '🤹‍♂️', '🤹‍♀️', '🎭', '🩰', '🎨', '🎬', '🎤', '🎧', '🎼', '🎹', '🥁', '🎷', '🎺', '🎸', '🪕', '🎻', '🎲', '♟', '🎯', '🎳', '🎮', '🎰', '🧩']
+  },
+  {
+      name: 'اشیاء',
+      emojis: ['👓', '🕶', '🥽', '🥼', '🦺', '👔', '👕', '👖', '🧣', '🧤', '🧥', '🧦', '👗', '👘', '🥻', '🩱', '🩲', '🩳', '👙', '👚', '👛', '👜', '👝', '🛍', '🎒', '🩴', '👞', '👟', '🥾', '🥿', '👠', '👡', '🩰', '👢', '👑', '👒', '🎩', '🎓', '🧢', '🪖', '⛑', '📿', '💄', '💍', '💎', '🔇', '🔈', '🔉', '🔊', '📢', '📣', '📯', '🔔', '🔕', '🎼', '🎵', '🎶', '🎙', '🎚', '🎛', '🎤', '🎧', '📻', '🎷', '🪗', '🎸', '🎹', '🎺', '🎻', '🪕', '🥁', '🪘', '📱', '📲', '☎️', '📞', '📟', '📠', '🔋', '🔌', '💻', '🖥', '🖨', '⌨️', '🖱', '🖲', '💽', '💾', '💿', '📀', '🧮', '🎥', '🎞', '📽', '🎬', '📺', '📷', '📸', '📹', '📼', '🔍', '🔎', '🕯', '💡', '🔦', '🏮', '🪔', '📔', '📕', '📖', '📗', '📘', '📙', '📚', '📓', '📒', '📃', '📜', '📄', '📰', '🗞', '📑', '🔖', '🏷', '💰', '🪙', '💴', '💵', '💶', '💷', '💸', '💳', '🧾', '✉️', '📧', '📨', '📩', '📤', '📥', '📦', '📫', '📪', '📬', '📭', '📮', '🗳', '✏️', '✒️', '🖋', '🖊', '🖌', '🖍', '📝', '💼', '📁', '📂', '🗂', '📅', '📆', '🗒', '🗓', '📇', '📈', '📉', '📊', '📋', '📌', '📍', '📎', '🖇', '📏', '📐', '✂️', '🗃', '🗄', '🗑', '🔒', '🔓', '🔏', '🔐', '🔑', '🗝', '🔨', '🪓', '⛏', '⚒', '🛠', '🗡', '⚔️', '🔫', '🪃', '🏹', '🛡', '🪚', '🔧', '🪛', '🔩', '⚙️', '🗜', '⚖️', '🦯', '🔗', '⛓', '🪝', '🧰', '🧲', '🪜', '⚗️', '🧪', '🧫', '🧬', '🔬', '🔭', '📡', '💉', '🩸', '💊', '🩹', '🩺', '🚪', '🛗', '🪞', '🪟', '🛏', '🛋', '🪑', '🚽', '🪠', '🚿', '🛁', '🪤', '🪒', '🧴', '🧷', '🧹', '🧺', '🧻', '🪣', '🧼', '🫧', '🪥', '🧽', '🧯', '🛒', '🚬', '⚰️', '🪦', '⚱️', '🗿', '🪧']
+  }
+];
+
+// Optimized Category Component to lazy load emojis
+const EmojiCategory = React.memo(({ category, onSelect, initialVisible = false }: { category: typeof EMOJI_CATEGORIES[0], onSelect: (e: string) => void, initialVisible?: boolean }) => {
+  const [isVisible, setIsVisible] = useState(initialVisible);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (initialVisible) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+            setIsVisible(true);
+            observer.disconnect();
+        }
+      },
+      { 
+          rootMargin: '100px', // Load content 100px before it comes into view
+          threshold: 0
+      }
+    );
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [initialVisible]);
+
+  return (
+    <div ref={containerRef} className="mb-4">
+        <h3 className="text-xs font-bold text-gray-500 dark:text-gray-400 mb-2 px-2 sticky top-0 bg-white/95 dark:bg-[#1E1E1E]/95 backdrop-blur-sm py-1 z-10 shadow-sm border-b border-gray-100 dark:border-white/5">
+            {category.name}
+        </h3>
+        <div className="min-h-[60px]">
+            {isVisible ? (
+                <div className="grid grid-cols-8 sm:grid-cols-9 gap-1 animate-in fade-in duration-300">
+                    {category.emojis.map((emoji) => (
+                        <button
+                            key={emoji}
+                            onClick={() => onSelect(emoji)}
+                            className="text-xl hover:bg-gray-100 dark:hover:bg-white/10 p-1.5 rounded-lg transition-colors flex items-center justify-center aspect-square"
+                            type="button"
+                        >
+                            {emoji}
+                        </button>
+                    ))}
+                </div>
+            ) : (
+                <div className="h-20 flex items-center justify-center">
+                    <div className="w-5 h-5 border-2 border-peikan-200 border-t-peikan-700 rounded-full animate-spin"></div>
+                </div>
+            )}
+        </div>
+    </div>
+  );
+});
 
 interface InputAreaProps {
   onSendMessage: (text: string, type: 'text' | 'voice' | 'image' | 'file') => void;
@@ -11,6 +99,8 @@ const InputArea: React.FC<InputAreaProps> = ({ onSendMessage }) => {
   const [message, setMessage] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showAttachMenu, setShowAttachMenu] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -31,6 +121,8 @@ const InputArea: React.FC<InputAreaProps> = ({ onSendMessage }) => {
       setMessage('');
       if (inputRef.current) inputRef.current.focus();
     }
+    setShowEmojiPicker(false);
+    setShowAttachMenu(false);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -38,6 +130,23 @@ const InputArea: React.FC<InputAreaProps> = ({ onSendMessage }) => {
       e.preventDefault();
       handleSend();
     }
+  };
+
+  const handleEmojiClick = (emoji: string) => {
+    setMessage(prev => prev + emoji);
+    // Optional: Focus input to keep typing
+    // if (inputRef.current) inputRef.current.focus(); 
+  };
+
+  const handleAttach = (type: 'image' | 'file') => {
+      // Mock Data
+      if (type === 'image') {
+           // Use a random image with current timestamp to avoid caching issues in mock
+           onSendMessage('https://picsum.photos/seed/' + Date.now() + '/600/400', 'image');
+      } else if (type === 'file') {
+           onSendMessage('Project_Proposal_v2.pdf', 'file');
+      }
+      setShowAttachMenu(false);
   };
 
   const formatDuration = (sec: number) => {
@@ -48,6 +157,64 @@ const InputArea: React.FC<InputAreaProps> = ({ onSendMessage }) => {
 
   return (
     <div className="p-4 bg-white/80 dark:bg-dark-surface/90 backdrop-blur-xl border-t border-gray-200 dark:border-white/5 sticky bottom-0 z-30">
+      
+      {/* Popovers Layer */}
+      <AnimatePresence>
+        {/* Emoji Picker */}
+        {showEmojiPicker && (
+            <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowEmojiPicker(false)} />
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                    className="absolute bottom-full right-4 mb-2 bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-2xl border border-gray-100 dark:border-white/10 overflow-hidden z-50 w-80 sm:w-96 max-w-[calc(100vw-32px)] h-80 flex flex-col"
+                >
+                    <div className="h-full overflow-y-auto custom-scrollbar p-2">
+                        {EMOJI_CATEGORIES.map((category, index) => (
+                            <EmojiCategory 
+                                key={category.name} 
+                                category={category} 
+                                onSelect={handleEmojiClick}
+                                initialVisible={index === 0} // Render first category immediately
+                            />
+                        ))}
+                    </div>
+                </motion.div>
+            </>
+        )}
+
+        {/* Attach Menu */}
+        {showAttachMenu && (
+             <>
+                <div className="fixed inset-0 z-40" onClick={() => setShowAttachMenu(false)} />
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                    className="absolute bottom-full right-16 mb-2 bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-2xl border border-gray-100 dark:border-white/10 p-2 z-50 min-w-[180px] flex flex-col gap-1"
+                >
+                    <button onClick={() => handleAttach('image')} className="flex items-center gap-3 p-3 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl transition-colors text-gray-700 dark:text-gray-200 w-full text-right">
+                        <div className="w-8 h-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center text-purple-600 dark:text-purple-400"><ImageIcon size={18} /></div>
+                        <span className="text-sm font-bold">ارسال تصویر</span>
+                    </button>
+                    <button onClick={() => handleAttach('file')} className="flex items-center gap-3 p-3 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl transition-colors text-gray-700 dark:text-gray-200 w-full text-right">
+                         <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400"><FileText size={18} /></div>
+                        <span className="text-sm font-bold">ارسال فایل</span>
+                    </button>
+                    <button onClick={() => setShowAttachMenu(false)} className="flex items-center gap-3 p-3 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl transition-colors text-gray-700 dark:text-gray-200 w-full text-right">
+                         <div className="w-8 h-8 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center text-red-600 dark:text-red-400"><Camera size={18} /></div>
+                        <span className="text-sm font-bold">دوربین</span>
+                    </button>
+                     <button onClick={() => setShowAttachMenu(false)} className="flex items-center gap-3 p-3 hover:bg-gray-100 dark:hover:bg-white/5 rounded-xl transition-colors text-gray-700 dark:text-gray-200 w-full text-right">
+                         <div className="w-8 h-8 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center text-green-600 dark:text-green-400"><MapPin size={18} /></div>
+                        <span className="text-sm font-bold">موقعیت مکانی</span>
+                    </button>
+                </motion.div>
+             </>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence mode="wait">
         {isRecording ? (
           <motion.div 
@@ -92,11 +259,21 @@ const InputArea: React.FC<InputAreaProps> = ({ onSendMessage }) => {
             exit={{ opacity: 0 }}
             className="flex items-end gap-3"
           >
-            <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="p-3 text-gray-400 hover:text-peikan-700 dark:hover:text-peikan-400 transition-colors">
+            <motion.button 
+                whileHover={{ scale: 1.1 }} 
+                whileTap={{ scale: 0.9 }} 
+                onClick={() => { setShowEmojiPicker(!showEmojiPicker); setShowAttachMenu(false); }}
+                className={`p-3 transition-colors ${showEmojiPicker ? 'text-peikan-700 dark:text-peikan-400' : 'text-gray-400 hover:text-peikan-700 dark:hover:text-peikan-400'}`}
+            >
               <Smile size={26} strokeWidth={1.5} />
             </motion.button>
             
-            <motion.button whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }} className="p-3 text-gray-400 hover:text-peikan-700 dark:hover:text-peikan-400 transition-colors">
+            <motion.button 
+                whileHover={{ scale: 1.1 }} 
+                whileTap={{ scale: 0.9 }} 
+                onClick={() => { setShowAttachMenu(!showAttachMenu); setShowEmojiPicker(false); }}
+                className={`p-3 transition-colors ${showAttachMenu ? 'text-peikan-700 dark:text-peikan-400' : 'text-gray-400 hover:text-peikan-700 dark:hover:text-peikan-400'}`}
+            >
               <Paperclip size={26} strokeWidth={1.5} />
             </motion.button>
 
@@ -127,10 +304,14 @@ const InputArea: React.FC<InputAreaProps> = ({ onSendMessage }) => {
               </motion.button>
             ) : (
               <motion.button 
-                whileHover={{ scale: 1.1, backgroundColor: 'rgba(0,0,0,0.05)' }}
+                whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
-                onClick={() => setIsRecording(true)}
-                className="p-3.5 text-gray-500 dark:text-gray-400 rounded-2xl hover:text-peikan-700 dark:hover:text-white transition-all"
+                onClick={() => {
+                    setIsRecording(true);
+                    setShowEmojiPicker(false);
+                    setShowAttachMenu(false);
+                }}
+                className="p-3 text-gray-400 hover:text-peikan-700 dark:hover:text-peikan-400 transition-colors"
               >
                 <Mic size={26} strokeWidth={1.5} />
               </motion.button>

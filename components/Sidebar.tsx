@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { User, Chat } from '../types';
-import { Search, PenSquare, Moon, Sun, LogOut, Settings } from 'lucide-react';
+import { Search, Moon, Sun, LogOut, Settings, Plus, Pin } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface SidebarProps {
@@ -8,6 +8,7 @@ interface SidebarProps {
   chats: Chat[];
   activeChatId: string | null;
   onSelectChat: (chatId: string) => void;
+  onOpenNewChat: () => void;
   isDarkMode: boolean;
   toggleTheme: () => void;
   onLogout: () => void;
@@ -19,6 +20,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   chats, 
   activeChatId, 
   onSelectChat, 
+  onOpenNewChat,
   isDarkMode, 
   toggleTheme,
   onLogout,
@@ -26,9 +28,14 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
 
-  const filteredChats = chats.filter(chat => 
-    chat.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredChats = chats
+    .filter(chat => chat.name.toLowerCase().includes(searchTerm.toLowerCase()))
+    .sort((a, b) => {
+      // Sort pinned chats to the top
+      if (a.isPinned && !b.isPinned) return -1;
+      if (!a.isPinned && b.isPinned) return 1;
+      return 0; 
+    });
 
   return (
     <div className="flex flex-col h-full bg-white dark:bg-dark-surface border-l border-gray-200 dark:border-dark-border relative z-20 shadow-2xl md:shadow-none">
@@ -89,8 +96,8 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
       </div>
 
-      {/* Chat List - Floating Card Style */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar px-3 space-y-1.5 pb-20">
+      {/* Chat List */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar px-3 space-y-1.5 pb-4">
         <AnimatePresence initial={false}>
           {filteredChats.map((chat, i) => {
             const isActive = chat.id === activeChatId;
@@ -136,11 +143,16 @@ const Sidebar: React.FC<SidebarProps> = ({
                     <h4 className={`text-[15px] font-bold truncate transition-colors duration-200 ${isActive ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}>
                       {chat.name}
                     </h4>
-                    {lastMsg && (
-                      <span className={`text-[11px] font-medium transition-colors duration-200 ${isActive ? 'text-white/70' : 'text-gray-400'}`}>
-                        {lastMsg.timestamp}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1.5">
+                        {chat.isPinned && (
+                            <Pin size={12} className={`rotate-45 ${isActive ? 'text-white/80' : 'text-gray-400'}`} fill="currentColor" />
+                        )}
+                        {lastMsg && (
+                        <span className={`text-[11px] font-medium transition-colors duration-200 ${isActive ? 'text-white/70' : 'text-gray-400'}`}>
+                            {lastMsg.timestamp}
+                        </span>
+                        )}
+                    </div>
                   </div>
                   
                   <div className="flex justify-between items-center">
@@ -168,14 +180,16 @@ const Sidebar: React.FC<SidebarProps> = ({
         </AnimatePresence>
       </div>
 
-      {/* FAB (New Chat) */}
-      <div className="absolute bottom-6 left-6 z-10">
+      {/* New Chat Button (Fixed at Bottom) */}
+      <div className="p-4 bg-white dark:bg-dark-surface border-t border-gray-100 dark:border-white/5 z-10">
         <motion.button 
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="bg-peikan-700 hover:bg-peikan-800 text-white w-14 h-14 rounded-2xl shadow-xl shadow-peikan-700/40 flex items-center justify-center transition-colors"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          onClick={onOpenNewChat}
+          className="w-full bg-peikan-700 hover:bg-peikan-800 text-white h-14 rounded-2xl shadow-xl shadow-peikan-700/30 flex items-center justify-center gap-2 transition-colors font-bold text-base"
         >
-          <PenSquare size={24} />
+          <Plus size={24} strokeWidth={2.5} />
+          <span>شروع گفتگوی جدید</span>
         </motion.button>
       </div>
     </div>

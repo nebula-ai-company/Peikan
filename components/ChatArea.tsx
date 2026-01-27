@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Chat, Message, User } from '../types';
 import MessageBubble from './MessageBubble';
 import InputArea from './InputArea';
-import { Search, MoreVertical, ArrowRight, MessageSquareDashed, X, ChevronUp, ChevronDown } from 'lucide-react';
+import { Search, MoreVertical, ArrowRight, MessageSquareDashed, X, ChevronUp, ChevronDown, Pin, PinOff, Info } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface ChatAreaProps {
@@ -11,9 +11,10 @@ interface ChatAreaProps {
   onSendMessage: (text: string, type: 'text' | 'voice' | 'image' | 'file') => void;
   onBack: () => void; // For mobile
   onToggleInfo: () => void;
+  onTogglePin: (chatId: string) => void;
 }
 
-const ChatArea: React.FC<ChatAreaProps> = ({ chat, currentUser, onSendMessage, onBack, onToggleInfo }) => {
+const ChatArea: React.FC<ChatAreaProps> = ({ chat, currentUser, onSendMessage, onBack, onToggleInfo, onTogglePin }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
@@ -22,6 +23,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chat, currentUser, onSendMessage, o
   const [searchQuery, setSearchQuery] = useState('');
   const [matchIds, setMatchIds] = useState<string[]>([]);
   const [currentMatchIndex, setCurrentMatchIndex] = useState(-1);
+  
+  // Header Menu State
+  const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState(false);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -121,7 +125,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chat, currentUser, onSendMessage, o
       }}></div>
 
       {/* Glass Header - Animated Transition between Info and Search */}
-      <div className="absolute top-0 left-0 right-0 h-[72px] bg-white/90 dark:bg-[#121212]/90 backdrop-blur-md border-b border-gray-200/50 dark:border-white/5 z-20 shadow-sm overflow-hidden">
+      <div className="absolute top-0 left-0 right-0 h-[72px] bg-white/90 dark:bg-[#121212]/90 backdrop-blur-md border-b border-gray-200/50 dark:border-white/5 z-20 shadow-sm overflow-visible">
         <AnimatePresence mode="wait">
             {!isSearchOpen ? (
                 <motion.div 
@@ -164,14 +168,55 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chat, currentUser, onSendMessage, o
                         >
                             <Search size={20} strokeWidth={1.5} />
                         </motion.button>
-                        <motion.button 
-                            whileHover={{ scale: 1.1 }} 
-                            whileTap={{ scale: 0.95 }} 
-                            onClick={onToggleInfo} 
-                            className="w-10 h-10 flex items-center justify-center hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-colors"
-                        >
-                            <MoreVertical size={20} strokeWidth={1.5} />
-                        </motion.button>
+                        
+                        {/* More Menu Dropdown */}
+                        <div className="relative">
+                            <motion.button 
+                                whileHover={{ scale: 1.1 }} 
+                                whileTap={{ scale: 0.95 }} 
+                                onClick={() => setIsHeaderMenuOpen(!isHeaderMenuOpen)} 
+                                className={`w-10 h-10 flex items-center justify-center rounded-full transition-colors ${isHeaderMenuOpen ? 'bg-gray-200 dark:bg-white/10 text-gray-800 dark:text-white' : 'hover:bg-gray-100 dark:hover:bg-white/10'}`}
+                            >
+                                <MoreVertical size={20} strokeWidth={1.5} />
+                            </motion.button>
+
+                            <AnimatePresence>
+                                {isHeaderMenuOpen && (
+                                    <>
+                                        <div className="fixed inset-0 z-40" onClick={() => setIsHeaderMenuOpen(false)}></div>
+                                        <motion.div 
+                                            initial={{ opacity: 0, scale: 0.95, y: -10 }}
+                                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                                            exit={{ opacity: 0, scale: 0.95, y: -10 }}
+                                            className="absolute top-full left-0 mt-2 w-48 bg-white dark:bg-[#1E1E1E] rounded-xl shadow-xl border border-gray-100 dark:border-white/10 z-50 overflow-hidden"
+                                        >
+                                            <div className="p-1">
+                                                <button 
+                                                    onClick={() => {
+                                                        onToggleInfo();
+                                                        setIsHeaderMenuOpen(false);
+                                                    }}
+                                                    className="w-full flex items-center gap-2 p-2.5 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg text-sm text-gray-700 dark:text-gray-200 transition-colors"
+                                                >
+                                                    <Info size={16} />
+                                                    <span>اطلاعات گفتگو</span>
+                                                </button>
+                                                <button 
+                                                    onClick={() => {
+                                                        onTogglePin(chat.id);
+                                                        setIsHeaderMenuOpen(false);
+                                                    }}
+                                                    className="w-full flex items-center gap-2 p-2.5 hover:bg-gray-100 dark:hover:bg-white/5 rounded-lg text-sm text-gray-700 dark:text-gray-200 transition-colors"
+                                                >
+                                                    {chat.isPinned ? <PinOff size={16} /> : <Pin size={16} />}
+                                                    <span>{chat.isPinned ? 'برداشتن سنجاق' : 'سنجاق کردن گفتگو'}</span>
+                                                </button>
+                                            </div>
+                                        </motion.div>
+                                    </>
+                                )}
+                            </AnimatePresence>
+                        </div>
                     </div>
                 </motion.div>
             ) : (

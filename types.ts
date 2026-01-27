@@ -26,8 +26,10 @@ export interface Chat {
   id: string;
   type: 'direct' | 'group';
   name: string; // User name or Group name
+  description?: string; // Group description
   avatar: string;
   participants: User[];
+  adminIds?: string[]; // IDs of users who are admins
   messages: Message[];
   unreadCount: number;
   isPinned: boolean;
