@@ -13,106 +13,118 @@ interface MessageBubbleProps {
 const MessageBubble: React.FC<MessageBubbleProps> = ({ message, isMe, sender, previousMessageSameSender }) => {
   const [isPlaying, setIsPlaying] = React.useState(false);
 
-  // Determine bubble shape based on sender sequence
+  // Layout Logic for RTL Direction
+  // isMe -> Right side (justify-start in RTL flex-row)
+  // !isMe -> Left side (justify-end in RTL flex-row)
+  const alignClass = isMe ? 'justify-start' : 'justify-end';
+  const alignItemsClass = isMe ? 'items-start' : 'items-end'; // Align text/content inside the wrapper
+
+  // Border Radius Logic
+  // Me (Right): Tail on Top-Right
+  // Them (Left): Tail on Top-Left
   const roundedClass = isMe
-    ? `${previousMessageSameSender ? 'rounded-tr-lg' : 'rounded-tr-2xl'} rounded-tl-2xl rounded-bl-2xl rounded-br-lg`
-    : `${previousMessageSameSender ? 'rounded-tl-lg' : 'rounded-tl-2xl'} rounded-tr-2xl rounded-br-2xl rounded-bl-lg`;
+    ? `${previousMessageSameSender ? 'rounded-tr-[1.2rem]' : 'rounded-tr-sm'} rounded-tl-[1.2rem] rounded-bl-[1.2rem] rounded-br-[1.2rem]`
+    : `${previousMessageSameSender ? 'rounded-tl-[1.2rem]' : 'rounded-tl-sm'} rounded-tr-[1.2rem] rounded-br-[1.2rem] rounded-bl-[1.2rem]`;
 
   // Colors
-  const bubbleColor = isMe
-    ? 'bg-peikan-50 dark:bg-peikan-900/30 border border-peikan-100 dark:border-peikan-800/50'
-    : 'bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border';
-
-  const textColor = isMe
-    ? 'text-gray-900 dark:text-gray-100'
-    : 'text-gray-900 dark:text-gray-100';
+  // Me: Solid Corporate Blue
+  // Them: White (Light Mode) / Dark Gray (Dark Mode)
+  const bubbleStyle = isMe
+    ? 'bg-peikan-700 text-white shadow-md shadow-peikan-700/10'
+    : 'bg-white dark:bg-[#1E1E1E] text-gray-900 dark:text-gray-100 shadow-sm border border-gray-100 dark:border-white/5';
 
   return (
     <motion.div 
+      layout
       initial={{ opacity: 0, y: 10, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      className={`flex w-full mb-1 ${isMe ? 'justify-end' : 'justify-start'} group`}
+      transition={{ duration: 0.2, ease: "easeOut" }}
+      className={`flex w-full ${alignClass} group mb-1`}
     >
-      <div className={`max-w-[75%] md:max-w-[60%] flex flex-col ${isMe ? 'items-end' : 'items-start'}`}>
-        {/* Sender Name in Group Chats */}
+      <div className={`max-w-[85%] md:max-w-[70%] lg:max-w-[60%] flex flex-col ${alignItemsClass}`}>
+        
+        {/* Sender Name in Group Chats (Only for 'Them') */}
         {!isMe && !previousMessageSameSender && sender && (
-          <span className="text-xs font-bold text-peikan-700 dark:text-peikan-400 mb-1 px-2">
+          <span className="text-[11px] font-bold text-gray-500 dark:text-gray-400 mb-1 px-1 opacity-90">
             {sender.name}
           </span>
         )}
 
-        <div className={`relative px-4 py-2 ${roundedClass} ${bubbleColor} shadow-sm transition-shadow hover:shadow-md`}>
-          {/* Reply Indicator (Mock) */}
+        <div className={`relative px-4 py-2.5 ${roundedClass} ${bubbleStyle} overflow-hidden`}>
+          {/* Reply Indicator */}
           {message.replyToId && (
-            <div className={`mb-2 text-xs border-r-2 ${isMe ? 'border-peikan-400' : 'border-accent-500'} pr-2 py-1 opacity-70`}>
-              <div className="font-semibold">پاسخ به:</div>
-              <div className="truncate">پیام قبلی...</div>
+            <div className={`mb-2 text-xs border-r-2 ${isMe ? 'border-white/40' : 'border-peikan-700'} pr-2 py-1 ${isMe ? 'bg-white/10' : 'bg-gray-50 dark:bg-white/5'} rounded-sm`}>
+               <div className={`font-bold ${isMe ? 'text-white/90' : 'text-peikan-700 dark:text-peikan-400'}`}>پاسخ به:</div>
+               <div className="truncate opacity-70">پیام قبلی...</div>
             </div>
           )}
 
           {/* Content Rendering */}
           {message.type === 'text' && (
-            <p className={`text-[15px] leading-relaxed whitespace-pre-wrap ${textColor}`}>
+            <p className="text-[15px] leading-7 whitespace-pre-wrap font-normal">
               {message.content}
             </p>
           )}
 
           {message.type === 'image' && (
-            <div className="mb-1">
+            <div className="-mx-2 -mt-2 mb-1">
               <img 
                 src={message.mediaUrl} 
                 alt="attachment" 
-                className="rounded-lg max-h-64 object-cover w-full cursor-pointer hover:opacity-95 transition-opacity" 
+                className="rounded-lg min-w-[200px] max-h-72 object-cover w-full cursor-pointer hover:opacity-95 transition-opacity" 
               />
               {message.content && message.content !== message.fileName && (
-                <p className={`mt-2 text-[15px] ${textColor}`}>{message.content}</p>
+                <p className="mt-2 px-2 text-[15px]">{message.content}</p>
               )}
             </div>
           )}
 
           {message.type === 'file' && (
-            <div className="flex items-center gap-3 p-2 bg-gray-50 dark:bg-black/20 rounded-lg">
-              <div className="bg-peikan-100 dark:bg-peikan-900 text-peikan-700 dark:text-peikan-300 p-3 rounded-full">
+            <div className={`flex items-center gap-3 p-3 rounded-xl ${isMe ? 'bg-white/10 border border-white/20' : 'bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5'}`}>
+              <div className={`p-2.5 rounded-full ${isMe ? 'bg-white/20 text-white' : 'bg-peikan-50 dark:bg-peikan-900/30 text-peikan-700 dark:text-peikan-300'}`}>
                 <Download size={20} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className={`text-sm font-medium truncate ${textColor}`}>{message.fileName}</div>
-                <div className="text-xs text-gray-500 dark:text-gray-400">{message.fileSize}</div>
+                <div className="text-sm font-bold truncate dir-ltr text-right">{message.fileName}</div>
+                <div className={`text-[10px] mt-0.5 ${isMe ? 'text-white/70' : 'text-gray-400'}`}>{message.fileSize}</div>
               </div>
             </div>
           )}
 
           {message.type === 'voice' && (
-            <div className="flex items-center gap-3 min-w-[200px] py-1">
+            <div className="flex items-center gap-3 min-w-[240px] py-1">
               <button 
                 onClick={() => setIsPlaying(!isPlaying)}
-                className={`p-2 rounded-full transition-colors ${isMe ? 'bg-peikan-200 text-peikan-800 dark:bg-peikan-700 dark:text-white' : 'bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-white'}`}
+                className={`p-2.5 rounded-full transition-transform active:scale-90 ${isMe ? 'bg-white text-peikan-700 shadow-sm' : 'bg-peikan-700 text-white shadow-md'}`}
               >
                 {isPlaying ? <Pause size={18} fill="currentColor" /> : <Play size={18} fill="currentColor" className="ml-0.5" />}
               </button>
-              <div className="flex-1 flex flex-col gap-1">
-                 {/* Fake Waveform */}
-                 <div className="flex items-center gap-[2px] h-6 items-end">
-                    {[...Array(20)].map((_, i) => (
+              <div className="flex-1 flex flex-col gap-1.5 justify-center">
+                 {/* Waveform */}
+                 <div className="flex items-center gap-[3px] h-8 items-center">
+                    {[...Array(24)].map((_, i) => (
                       <div 
                         key={i} 
-                        className={`w-1 rounded-full ${isMe ? 'bg-peikan-400 dark:bg-peikan-500' : 'bg-gray-400 dark:bg-gray-500'}`}
-                        style={{ height: `${Math.max(20, Math.random() * 100)}%`, opacity: isPlaying ? 1 : 0.6 }}
+                        className={`w-1 rounded-full transition-all duration-300 ${isMe ? 'bg-white/50' : 'bg-gray-400/50'}`}
+                        style={{ 
+                            height: isPlaying ? `${Math.random() * 80 + 20}%` : `${Math.sin(i) * 50 + 50}%`,
+                            opacity: isPlaying ? 1 : 0.7 
+                        }}
                       />
                     ))}
                  </div>
-                 <span className="text-xs text-gray-500 dark:text-gray-400 font-mono">{message.duration}</span>
+                 <span className={`text-[10px] font-mono ${isMe ? 'text-white/80' : 'text-gray-500 dark:text-gray-400'}`}>{message.duration}</span>
               </div>
             </div>
           )}
 
           {/* Footer: Time & Status */}
-          <div className={`flex items-center justify-end gap-1 mt-1 select-none ${message.type === 'image' ? 'absolute bottom-2 right-2 bg-black/40 px-2 py-0.5 rounded-full text-white backdrop-blur-sm' : ''}`}>
-            <span className={`text-[10px] ${message.type === 'image' ? 'text-white' : 'text-gray-400 dark:text-gray-500'}`}>
+          <div className={`flex items-center justify-end gap-1 mt-1.5 select-none opacity-80 ${message.type === 'image' ? 'absolute bottom-2 right-2 bg-black/40 px-2 py-0.5 rounded-full text-white backdrop-blur-md border border-white/10' : ''}`}>
+            <span className={`text-[10px] font-medium tracking-wide ${isMe || message.type === 'image' ? 'text-white' : 'text-gray-400'}`}>
               {message.timestamp}
             </span>
             {isMe && (
-              <span className={message.type === 'image' ? 'text-white' : (message.isRead ? 'text-peikan-600 dark:text-peikan-400' : 'text-gray-400')}>
+              <span className={message.type === 'image' ? 'text-white' : 'text-white/90'}>
                 {message.isRead ? <CheckCheck size={14} /> : <Check size={14} />}
               </span>
             )}
