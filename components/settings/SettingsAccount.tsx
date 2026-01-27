@@ -1,99 +1,149 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { User } from '../../types';
-import { Camera, Smartphone, User as UserIcon, AtSign, FileText } from 'lucide-react';
+import { Camera, Smartphone, User as UserIcon, AtSign, FileText, Copy, CheckCircle2, Edit3 } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 interface SettingsAccountProps {
   currentUser: User;
 }
 
 const SettingsAccount: React.FC<SettingsAccountProps> = ({ currentUser }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopyUsername = () => {
+    // In a real app, use the actual username from props
+    navigator.clipboard.writeText('amir_rezaei'); 
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-      <div className="text-center md:text-right mb-8">
-          <div className="relative inline-block md:hidden mb-6">
-              <div className="w-28 h-28 rounded-full p-1 bg-white dark:bg-white/5 border border-gray-100 dark:border-white/10 shadow-lg">
-                <img src={currentUser.avatar} alt="Profile" className="w-full h-full rounded-full object-cover" />
-              </div>
-              <button className="absolute bottom-1 right-1 p-2.5 bg-peikan-700 text-white rounded-full shadow-lg border-2 border-white dark:border-[#181818]">
-                  <Camera size={16} />
-              </button>
-          </div>
-          <h3 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">اطلاعات حساب</h3>
-          <p className="text-gray-500 dark:text-gray-400 text-sm mt-2 leading-relaxed">
-            مشخصات عمومی، تصویر پروفایل و اطلاعات تماس خود را در این بخش مدیریت کنید.
-          </p>
+    <motion.div 
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.4, ease: "easeOut" }}
+      className="space-y-8 pb-10"
+    >
+      
+      {/* Header Section */}
+      <div>
+        <h3 className="text-2xl font-black text-gray-900 dark:text-white tracking-tight">حساب کاربری</h3>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mt-2 leading-relaxed">
+          مدیریت اطلاعات شخصی و نحوه نمایش پروفایل شما به دیگران.
+        </p>
       </div>
 
-      <div className="flex flex-col md:flex-row gap-8 items-start">
-           {/* Desktop Avatar */}
-           <div className="hidden md:block relative group cursor-pointer shrink-0">
-              <div className="w-32 h-32 rounded-full overflow-hidden ring-4 ring-gray-50 dark:ring-white/5 shadow-xl transition-all duration-300 group-hover:ring-peikan-100 dark:group-hover:ring-peikan-900/20">
-                  <img src={currentUser.avatar} alt="Profile" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-              </div>
-              <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 backdrop-blur-[2px]">
-                  <Camera size={28} className="text-white drop-shadow-md" />
-                  <span className="absolute bottom-6 text-[10px] text-white font-bold opacity-80">تغییر عکس</span>
+      {/* Premium Profile Picture Section */}
+      <div className="flex flex-col items-center justify-center py-6">
+        <div className="relative group cursor-pointer">
+           {/* Avatar Container with Gradient Ring */}
+           <div className="w-36 h-36 rounded-full p-1.5 bg-gradient-to-tr from-peikan-300 to-peikan-600 shadow-xl shadow-peikan-500/20">
+              <div className="w-full h-full rounded-full border-4 border-white dark:border-[#181818] overflow-hidden relative bg-white dark:bg-white/5">
+                 <img 
+                    src={currentUser.avatar} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" 
+                 />
+                 {/* Hover Overlay */}
+                 <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <Camera className="text-white mb-1" size={24} />
+                    <span className="text-[10px] text-white font-bold">تغییر تصویر</span>
+                 </div>
               </div>
            </div>
 
-           <div className="flex-1 w-full space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-500 dark:text-gray-400 mr-1">نام نمایشی</label>
-                      <div className="relative group">
-                        <UserIcon className="absolute right-4 top-3.5 text-gray-400 group-focus-within:text-peikan-700 transition-colors" size={18} />
-                        <input 
-                            type="text" 
-                            defaultValue={currentUser.name} 
-                            className="w-full pr-11 pl-4 py-3 bg-gray-50 dark:bg-black/20 border-2 border-transparent hover:bg-gray-100 dark:hover:bg-white/5 focus:bg-white dark:focus:bg-[#0a0a0a] focus:border-peikan-700 rounded-xl outline-none text-gray-900 dark:text-white font-bold transition-all placeholder-gray-400 text-sm" 
-                        />
-                      </div>
-                  </div>
-                  <div className="space-y-2">
-                      <label className="text-xs font-bold text-gray-500 dark:text-gray-400 mr-1">نام کاربری</label>
-                      <div className="relative group">
-                          <AtSign className="absolute right-4 top-3.5 text-gray-400 group-focus-within:text-peikan-700 transition-colors" size={18} />
-                          <input 
-                            type="text" 
-                            defaultValue="amir_rezaei" 
-                            className="w-full pr-11 pl-4 py-3 bg-gray-50 dark:bg-black/20 border-2 border-transparent hover:bg-gray-100 dark:hover:bg-white/5 focus:bg-white dark:focus:bg-[#0a0a0a] focus:border-peikan-700 rounded-xl outline-none text-gray-900 dark:text-white font-bold transition-all placeholder-gray-400 text-sm dir-ltr text-right" 
-                           />
-                      </div>
+           {/* Floating Edit Badge */}
+           <button className="absolute bottom-2 right-2 w-10 h-10 bg-peikan-700 text-white rounded-full border-[3px] border-white dark:border-[#181818] flex items-center justify-center shadow-lg hover:bg-peikan-800 transition-colors z-10 active:scale-95 transform hover:-translate-y-0.5">
+               <Edit3 size={16} />
+           </button>
+        </div>
+        <p className="mt-4 text-xs font-medium text-gray-400">حداکثر حجم تصویر ۵ مگابایت</p>
+      </div>
+
+      <div className="w-full h-px bg-gray-100 dark:bg-white/5"></div>
+
+      {/* Form Fields */}
+      <div className="grid grid-cols-1 gap-6">
+          
+          {/* Name & Username Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                      <UserIcon size={16} className="text-peikan-700" />
+                      نام نمایشی
+                  </label>
+                  <div className="relative">
+                      <input 
+                        type="text" 
+                        defaultValue={currentUser.name}
+                        className="w-full px-4 py-3.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl focus:border-peikan-700 focus:ring-4 focus:ring-peikan-700/10 outline-none transition-all text-gray-900 dark:text-white font-bold text-sm shadow-sm"
+                      />
                   </div>
               </div>
 
               <div className="space-y-2">
-                  <label className="text-xs font-bold text-gray-500 dark:text-gray-400 mr-1">بیوگرافی</label>
-                  <div className="relative group">
-                     <FileText className="absolute right-4 top-3.5 text-gray-400 group-focus-within:text-peikan-700 transition-colors" size={18} />
-                     <textarea 
-                        rows={3} 
-                        defaultValue={currentUser.bio} 
-                        className="w-full pr-11 pl-4 py-3 bg-gray-50 dark:bg-black/20 border-2 border-transparent hover:bg-gray-100 dark:hover:bg-white/5 focus:bg-white dark:focus:bg-[#0a0a0a] focus:border-peikan-700 rounded-xl outline-none text-gray-900 dark:text-white font-medium transition-all resize-none text-sm leading-relaxed" 
-                     />
-                  </div>
-              </div>
-
-              <div className="pt-6 border-t border-gray-100 dark:border-white/5">
-                  <h4 className="text-sm font-bold text-gray-900 dark:text-white mb-4">اطلاعات تماس</h4>
-                  <div className="flex items-center justify-between p-4 bg-gray-50 dark:bg-black/20 rounded-xl border border-gray-100 dark:border-white/5 hover:border-gray-200 dark:hover:border-white/10 transition-colors group">
-                      <div className="flex items-center gap-4">
-                          <div className="w-10 h-10 bg-white dark:bg-white/5 rounded-full flex items-center justify-center text-gray-500 shadow-sm">
-                             <Smartphone size={20} />
-                          </div>
-                          <div>
-                             <span className="block text-xs text-gray-400 mb-0.5">شماره موبایل متصل</span>
-                             <span className="font-mono text-gray-700 dark:text-gray-200 text-lg font-bold dir-ltr tracking-wide">0912 345 6789</span>
-                          </div>
-                      </div>
-                      <button className="px-4 py-2 bg-white dark:bg-white/5 hover:bg-peikan-50 dark:hover:bg-white/10 text-peikan-700 dark:text-white text-xs font-bold rounded-lg transition-colors border border-gray-100 dark:border-white/5 shadow-sm">
-                        ویرایش
+                  <label className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                      <AtSign size={16} className="text-peikan-700" />
+                      نام کاربری
+                  </label>
+                  <div className="relative">
+                      <input 
+                        type="text" 
+                        defaultValue="amir_rezaei"
+                        className="w-full pl-12 pr-4 py-3.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl focus:border-peikan-700 focus:ring-4 focus:ring-peikan-700/10 outline-none transition-all text-gray-900 dark:text-white font-bold text-sm dir-ltr text-left font-mono shadow-sm"
+                      />
+                      <button 
+                        onClick={handleCopyUsername}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 p-1.5 text-gray-400 hover:text-peikan-700 hover:bg-peikan-50 dark:hover:bg-white/10 rounded-lg transition-colors"
+                        title="کپی نام کاربری"
+                      >
+                         {copied ? <CheckCircle2 size={18} className="text-green-500" /> : <Copy size={18} />}
                       </button>
                   </div>
               </div>
-           </div>
+          </div>
+
+          {/* Bio */}
+          <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-700 dark:text-gray-300 flex items-center gap-2">
+                  <FileText size={16} className="text-peikan-700" />
+                  بیوگرافی
+              </label>
+              <div className="relative">
+                  <textarea 
+                    rows={3}
+                    defaultValue={currentUser.bio}
+                    className="w-full px-4 py-3.5 bg-gray-50 dark:bg-white/5 border border-gray-200 dark:border-white/10 rounded-xl focus:border-peikan-700 focus:ring-4 focus:ring-peikan-700/10 outline-none transition-all text-gray-900 dark:text-white font-medium text-sm leading-relaxed resize-none shadow-sm"
+                    placeholder="درباره خودتان بنویسید..."
+                  />
+                  <span className="absolute bottom-3 left-3 text-[10px] text-gray-400 font-mono">120/150</span>
+              </div>
+          </div>
+
+          {/* Contact Info Card */}
+          <div className="mt-2">
+              <label className="text-sm font-bold text-gray-700 dark:text-gray-300 mb-3 block">شماره موبایل</label>
+              <div className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 shadow-sm hover:border-peikan-200 dark:hover:border-white/20 transition-colors">
+                  <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-green-50 dark:bg-green-900/20 rounded-full flex items-center justify-center text-green-600 dark:text-green-400">
+                          <Smartphone size={22} strokeWidth={1.5} />
+                      </div>
+                      <div>
+                          <div className="font-mono font-bold text-lg text-gray-900 dark:text-white dir-ltr tracking-wider">0912 345 6789</div>
+                          <div className="text-xs text-green-600 dark:text-green-400 font-bold flex items-center gap-1 mt-0.5">
+                              <CheckCircle2 size={12} />
+                              تایید شده
+                          </div>
+                      </div>
+                  </div>
+                  <button className="px-4 py-2 text-xs font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-white/10 rounded-lg transition-colors border border-gray-200 dark:border-white/10 shadow-sm">
+                      تغییر شماره
+                  </button>
+              </div>
+          </div>
+
       </div>
-    </div>
+    </motion.div>
   );
 };
 
