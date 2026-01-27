@@ -1,0 +1,8 @@
+{
+  "name": "Peikan",
+  "description": "A professional, self-hosted messaging application for Iranian businesses, optimized for Persian text (RTL) with a clean, trustworthy design.",
+  "requestFramePermissions": [
+    "microphone",
+    "camera"
+  ]
+}
