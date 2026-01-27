@@ -1,13 +1,33 @@
 import React from 'react';
 import { Chat } from '../types';
 import { X, Bell, Image as ImageIcon, FileText, Ban, Trash2, Link, ChevronLeft } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface RightPanelProps {
   chat: Chat | undefined;
   isOpen: boolean;
   onClose: () => void;
 }
+
+const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: { 
+        opacity: 1,
+        transition: { 
+            when: "beforeChildren",
+            staggerChildren: 0.1 
+        }
+    }
+};
+
+const itemVariants = {
+    hidden: { opacity: 0, x: 20 },
+    visible: { 
+        opacity: 1, 
+        x: 0,
+        transition: { type: "spring", stiffness: 300, damping: 24 }
+    }
+};
 
 const RightPanel: React.FC<RightPanelProps> = ({ chat, isOpen, onClose }) => {
   if (!chat) return null;
@@ -27,9 +47,15 @@ const RightPanel: React.FC<RightPanelProps> = ({ chat, isOpen, onClose }) => {
         <span className="font-extrabold text-lg text-gray-800 dark:text-gray-100">پروفایل کاربری</span>
       </div>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
+      <motion.div 
+        className="flex-1 overflow-y-auto custom-scrollbar"
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        key={chat.id} // Re-animate on new chat
+      >
         {/* Profile Info Card */}
-        <div className="relative mb-6">
+        <motion.div variants={itemVariants} className="relative mb-6">
             <div className="h-28 bg-peikan-50 dark:bg-peikan-900/10"></div>
             <div className="px-6 -mt-14 flex flex-col items-center">
                  <motion.img 
@@ -50,11 +76,11 @@ const RightPanel: React.FC<RightPanelProps> = ({ chat, isOpen, onClose }) => {
                       </p>
                  )}
             </div>
-        </div>
+        </motion.div>
 
         {/* Actions */}
         <div className="px-4 pb-8 space-y-6">
-            <div className="space-y-1">
+            <motion.div variants={itemVariants} className="space-y-1">
                 <h3 className="px-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">تنظیمات گفتگو</h3>
                 
                 <div className="flex items-center justify-between p-3.5 rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5 cursor-pointer transition-colors group">
@@ -66,9 +92,9 @@ const RightPanel: React.FC<RightPanelProps> = ({ chat, isOpen, onClose }) => {
                         <div className="w-4 h-4 bg-peikan-700 rounded-full absolute top-1 left-1 shadow-sm"></div>
                     </div>
                 </div>
-            </div>
+            </motion.div>
 
-            <div className="space-y-1">
+            <motion.div variants={itemVariants} className="space-y-1">
                 <h3 className="px-2 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">رسانه اشتراکی</h3>
                 
                 <button className="w-full flex items-center gap-3.5 p-3.5 rounded-2xl hover:bg-gray-50 dark:hover:bg-white/5 text-gray-700 dark:text-gray-200 transition-colors group">
@@ -97,9 +123,9 @@ const RightPanel: React.FC<RightPanelProps> = ({ chat, isOpen, onClose }) => {
                         <ChevronLeft size={16} />
                     </div>
                 </button>
-            </div>
+            </motion.div>
 
-            <div className="space-y-2 pt-4 border-t border-gray-100 dark:border-white/5">
+            <motion.div variants={itemVariants} className="space-y-2 pt-4 border-t border-gray-100 dark:border-white/5">
                 <button className="w-full flex items-center gap-3.5 p-3.5 rounded-2xl hover:bg-red-50 dark:hover:bg-red-900/10 text-red-600 dark:text-red-400 transition-colors font-bold text-sm">
                     <Ban size={20} />
                     <span>مسدود کردن کاربر</span>
@@ -108,9 +134,9 @@ const RightPanel: React.FC<RightPanelProps> = ({ chat, isOpen, onClose }) => {
                     <Trash2 size={20} />
                     <span>حذف تاریخچه گفتگو</span>
                 </button>
-            </div>
+            </motion.div>
         </div>
-      </div>
+      </motion.div>
     </motion.div>
   );
 };

@@ -8,6 +8,7 @@ import Login from './components/Login';
 import Register from './components/Register';
 import ForgotPassword from './components/ForgotPassword';
 import LoginCarousel from './components/LoginCarousel';
+import SettingsModal from './components/SettingsModal';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const App: React.FC = () => {
@@ -16,6 +17,7 @@ const App: React.FC = () => {
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isRightPanelOpen, setIsRightPanelOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Initialize Theme
   useEffect(() => {
@@ -134,6 +136,7 @@ const App: React.FC = () => {
           isDarkMode={isDarkMode}
           toggleTheme={() => setIsDarkMode(!isDarkMode)}
           onLogout={() => setViewState('login')}
+          onOpenSettings={() => setIsSettingsOpen(true)}
         />
       </div>
 
@@ -154,6 +157,23 @@ const App: React.FC = () => {
         isOpen={isRightPanelOpen}
         onClose={() => setIsRightPanelOpen(false)}
       />
+
+      {/* Settings Modal */}
+      <AnimatePresence>
+        {isSettingsOpen && (
+          <SettingsModal 
+            isOpen={isSettingsOpen}
+            onClose={() => setIsSettingsOpen(false)}
+            currentUser={CURRENT_USER}
+            isDarkMode={isDarkMode}
+            toggleTheme={() => setIsDarkMode(!isDarkMode)}
+            onLogout={() => {
+              setIsSettingsOpen(false);
+              setViewState('login');
+            }}
+          />
+        )}
+      </AnimatePresence>
 
     </div>
   );
