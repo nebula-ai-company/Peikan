@@ -56,7 +56,7 @@ const App: React.FC = () => {
     }
   }, [activeChatId]);
 
-  const handleSendMessage = (content: string, type: 'text' | 'voice' | 'image' | 'file' | 'sticker' | 'gif') => {
+  const handleSendMessage = (content: string, type: 'text' | 'voice' | 'image' | 'file' | 'sticker' | 'gif', replyToId?: string) => {
     if (!activeChatId) return;
 
     let messageContent = content;
@@ -90,7 +90,9 @@ const App: React.FC = () => {
       mediaUrl: mediaUrl,
       fileName: fileName,
       fileSize: fileSize,
-      duration: type === 'voice' ? '0:05' : undefined
+      duration: type === 'voice' ? '0:05' : undefined,
+      replyToId: replyToId,
+      reactions: []
     };
 
     setChats(prevChats => prevChats.map(chat => {
@@ -98,6 +100,43 @@ const App: React.FC = () => {
         return {
           ...chat,
           messages: [...chat.messages, newMessage]
+        };
+      }
+      return chat;
+    }));
+  };
+
+  const handleAddReaction = (chatId: string, messageId: string, emoji: string) => {
+    setChats(prev => prev.map(chat => {
+      if (chat.id === chatId) {
+        return {
+          ...chat,
+          messages: chat.messages.map(msg => {
+            if (msg.id === messageId) {
+              const existingReaction = msg.reactions?.find(r => r.emoji === emoji);
+              let newReactions = msg.reactions || [];
+
+              if (existingReaction) {
+                 if (existingReaction.users.includes(CURRENT_USER.id)) {
+                    // Remove user (toggle off)
+                    const newUsers = existingReaction.users.filter(u => u !== CURRENT_USER.id);
+                    if (newUsers.length === 0) {
+                        newReactions = newReactions.filter(r => r.emoji !== emoji);
+                    } else {
+                        newReactions = newReactions.map(r => r.emoji === emoji ? { ...r, count: newUsers.length, users: newUsers } : r);
+                    }
+                 } else {
+                    // Add user (toggle on)
+                    newReactions = newReactions.map(r => r.emoji === emoji ? { ...r, count: r.count + 1, users: [...r.users, CURRENT_USER.id] } : r);
+                 }
+              } else {
+                  // New reaction type
+                  newReactions = [...newReactions, { emoji, count: 1, users: [CURRENT_USER.id] }];
+              }
+              return { ...msg, reactions: newReactions };
+            }
+            return msg;
+          })
         };
       }
       return chat;
@@ -306,6 +345,7 @@ const App: React.FC = () => {
            chat={activeChat}
            currentUser={CURRENT_USER}
            onSendMessage={handleSendMessage}
+           onReact={handleAddReaction}
            onBack={() => setActiveChatId(null)}
            onToggleInfo={() => setIsRightPanelOpen(!isRightPanelOpen)}
            onTogglePin={handleTogglePin}

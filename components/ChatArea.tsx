@@ -8,13 +8,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 interface ChatAreaProps {
   chat: Chat | undefined;
   currentUser: User;
-  onSendMessage: (text: string, type: 'text' | 'voice' | 'image' | 'file') => void;
+  onSendMessage: (text: string, type: 'text' | 'voice' | 'image' | 'file' | 'sticker' | 'gif', replyToId?: string) => void;
+  onReact: (chatId: string, messageId: string, emoji: string) => void;
   onBack: () => void; // For mobile
   onToggleInfo: () => void;
   onTogglePin: (chatId: string) => void;
 }
 
-const ChatArea: React.FC<ChatAreaProps> = ({ chat, currentUser, onSendMessage, onBack, onToggleInfo, onTogglePin }) => {
+const ChatArea: React.FC<ChatAreaProps> = ({ chat, currentUser, onSendMessage, onReact, onBack, onToggleInfo, onTogglePin }) => {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messageRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
@@ -26,6 +27,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chat, currentUser, onSendMessage, o
   
   // Header Menu State
   const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState(false);
+
+  // Reply State
+  const [replyingTo, setReplyingTo] = useState<Message | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -86,6 +90,10 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chat, currentUser, onSendMessage, o
       setMatchIds([]);
   };
 
+  const handleReply = (message: Message) => {
+      setReplyingTo(message);
+  };
+
   // Find other participant for direct chat info
   const otherParticipant = chat?.type === 'direct' ? chat.participants.find(p => p.id !== currentUser.id) : null;
   const statusText = chat?.type === 'group' 
@@ -117,7 +125,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chat, currentUser, onSendMessage, o
   }
 
   return (
-    <div className="flex flex-col h-full bg-[#f0f2f5] dark:bg-[#0b0b0b] relative">
+    <div className="flex flex-col h-full bg-[#f0f2f5] dark:bg-[#0b0b0b] relative overflow-hidden">
       {/* Refined Pattern Background */}
       <div className="absolute inset-0 opacity-[0.6] dark:opacity-[0.05] pointer-events-none" style={{
         backgroundImage: `radial-gradient(#cfd8dc 1.5px, transparent 1.5px)`,
@@ -275,8 +283,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chat, currentUser, onSendMessage, o
         </AnimatePresence>
       </div>
 
-      {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto pt-24 pb-6 px-2 sm:px-4 custom-scrollbar z-10">
+      {/* Messages Scroll Area - No Scrollbar Class Applied Here */}
+      <div className="flex-1 overflow-y-auto overflow-x-hidden pt-24 pb-6 px-2 sm:px-4 no-scrollbar z-10 scroll-smooth">
          {/* Date Pill */}
          <div className="flex justify-center mb-6 sticky top-2 z-10 opacity-80 hover:opacity-100 transition-opacity pointer-events-none">
             <span className="bg-gray-100/90 dark:bg-[#1E1E1E]/90 backdrop-blur-md text-gray-500 dark:text-gray-400 text-[11px] font-bold px-3 py-1 rounded-full shadow-sm border border-gray-200/50 dark:border-white/10">
@@ -302,6 +310,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chat, currentUser, onSendMessage, o
                     const isSameSenderAsPrev = prevMsg ? prevMsg.senderId === msg.senderId : false;
                     const isLastInGroup = !nextMsg || nextMsg.senderId !== msg.senderId;
 
+                    // Find parent message for reply context
+                    const replyContext = msg.replyToId 
+                        ? chat.messages.find(m => m.id === msg.replyToId) 
+                        : undefined;
+
                     return (
                         <MessageBubble 
                             key={msg.id} 
@@ -311,6 +324,10 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chat, currentUser, onSendMessage, o
                             previousMessageSameSender={isSameSenderAsPrev}
                             isLastInGroup={isLastInGroup}
                             highlightText={searchQuery}
+                            onReply={handleReply}
+                            onReact={onReact}
+                            chatId={chat.id}
+                            replyContext={replyContext}
                             messageRef={(el) => {
                                 if (el) messageRefs.current.set(msg.id, el);
                                 else messageRefs.current.delete(msg.id);
@@ -324,7 +341,13 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chat, currentUser, onSendMessage, o
       </div>
 
       {/* Input */}
-      {!isSearchOpen && <InputArea onSendMessage={onSendMessage} />}
+      {!isSearchOpen && (
+          <InputArea 
+            onSendMessage={onSendMessage} 
+            replyingTo={replyingTo}
+            onCancelReply={() => setReplyingTo(null)}
+          />
+      )}
     </div>
   );
 };

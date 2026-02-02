@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Message, User } from '../types';
-import { Check, CheckCheck, Download, Play, Pause } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Check, CheckCheck, Download, Play, Pause, Reply, Smile, MoreHorizontal } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface MessageBubbleProps {
   message: Message;
@@ -11,7 +11,13 @@ interface MessageBubbleProps {
   isLastInGroup: boolean;
   highlightText?: string;
   messageRef?: (el: HTMLDivElement | null) => void;
+  onReply: (message: Message) => void;
+  onReact: (chatId: string, messageId: string, emoji: string) => void;
+  chatId: string; // Needed for reactions
+  replyContext?: Message; // Passed from parent to show actual content
 }
+
+const QUICK_REACTIONS = ['❤️', '😂', '👍', '😢', '🙏', '🔥'];
 
 const MessageBubble: React.FC<MessageBubbleProps> = ({ 
   message, 
@@ -20,9 +26,15 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   previousMessageSameSender, 
   isLastInGroup,
   highlightText,
-  messageRef
+  messageRef,
+  onReply,
+  onReact,
+  chatId,
+  replyContext
 }) => {
-  const [isPlaying, setIsPlaying] = React.useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [showActions, setShowActions] = useState(false);
+  const [showReactionPicker, setShowReactionPicker] = useState(false);
 
   // Layout Logic for RTL Direction
   const alignClass = isMe ? 'justify-start' : 'justify-end';
@@ -68,13 +80,34 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
     );
   };
 
+  const renderReplyContext = () => {
+      if (!replyContext) return (
+          <div className="truncate opacity-70 mt-0.5 italic text-[11px]">پیام حذف شده</div>
+      );
+
+      let content = replyContext.content;
+      if (replyContext.type === 'image') content = 'تصویر';
+      if (replyContext.type === 'voice') content = 'پیام صوتی';
+      if (replyContext.type === 'file') content = replyContext.fileName || 'فایل';
+      if (replyContext.type === 'sticker') content = 'استیکر';
+
+      return (
+          <div className="flex items-center gap-1.5 mt-0.5 opacity-80">
+               {replyContext.type === 'image' && <div className="w-3 h-3 bg-current opacity-50 rounded-sm"></div>}
+               <span className="truncate text-[11px]">{content}</span>
+          </div>
+      );
+  };
+
   return (
     <motion.div 
       ref={messageRef}
       initial={{ opacity: 0, y: 8, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className={`flex w-full ${alignClass} group mb-1 relative`}
+      className={`flex w-full ${alignClass} group mb-1 relative px-1`}
+      onMouseEnter={() => setShowActions(true)}
+      onMouseLeave={() => { setShowActions(false); setShowReactionPicker(false); }}
     >
       <div className={`max-w-[85%] md:max-w-[70%] lg:max-w-[60%] flex flex-col ${alignItemsClass} relative`}>
         
@@ -85,13 +118,65 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           </span>
         )}
 
-        <div className={`relative z-10 min-w-[100px] ${bubbleContainerClass}`}>
+        {/* Bubble Wrapper with Relative Positioning for Actions */}
+        <div className={`relative z-10 min-w-[100px] group/bubble ${bubbleContainerClass}`}>
           
+          {/* Action Bar (Reply, React) - NOW INSIDE THE BUBBLE WRAPPER */}
+          <div 
+            className={`absolute top-1/2 -translate-y-1/2 ${
+                isMe ? 'right-full mr-2' : 'left-full ml-2'
+            } z-20 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none group-hover:pointer-events-auto`}
+          >
+             <motion.div 
+                initial={{ scale: 0.8 }} 
+                whileHover={{ scale: 1.1 }} 
+                className="bg-white dark:bg-[#252525] shadow-md border border-gray-100 dark:border-white/10 rounded-full p-1.5 cursor-pointer text-gray-500 hover:text-peikan-700 dark:text-gray-400 dark:hover:text-white"
+                onClick={(e) => { e.stopPropagation(); onReply(message); }}
+                title="پاسخ"
+             >
+                <Reply size={16} />
+             </motion.div>
+             
+             <div className="relative">
+                <motion.div 
+                    initial={{ scale: 0.8 }} 
+                    whileHover={{ scale: 1.1 }} 
+                    className="bg-white dark:bg-[#252525] shadow-md border border-gray-100 dark:border-white/10 rounded-full p-1.5 cursor-pointer text-gray-500 hover:text-peikan-700 dark:text-gray-400 dark:hover:text-white"
+                    onClick={(e) => { e.stopPropagation(); setShowReactionPicker(!showReactionPicker); }}
+                    title="واکنش"
+                >
+                    <Smile size={16} />
+                </motion.div>
+                
+                {/* Quick Reaction Picker Popover */}
+                <AnimatePresence>
+                    {showReactionPicker && (
+                        <motion.div 
+                            initial={{ opacity: 0, scale: 0.8, y: 10 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.8, y: 10 }}
+                            className={`absolute bottom-full mb-2 ${isMe ? 'right-0' : 'left-0'} bg-white dark:bg-[#252525] rounded-full shadow-xl border border-gray-100 dark:border-white/10 p-1.5 flex items-center gap-1 z-50`}
+                        >
+                            {QUICK_REACTIONS.map(emoji => (
+                                <button
+                                    key={emoji}
+                                    onClick={(e) => { e.stopPropagation(); onReact(chatId, message.id, emoji); setShowReactionPicker(false); }}
+                                    className="w-8 h-8 flex items-center justify-center text-xl hover:bg-gray-100 dark:hover:bg-white/10 rounded-full transition-transform hover:scale-125"
+                                >
+                                    {emoji}
+                                </button>
+                            ))}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+             </div>
+          </div>
+
           {/* Reply Indicator (Standard Bubble) */}
           {message.replyToId && useStandardBubble && (
-            <div className={`mb-2 text-xs border-r-[3px] ${isMe ? 'border-white/40' : 'border-peikan-700'} pr-2 py-1 ${isMe ? 'bg-black/10' : 'bg-gray-50 dark:bg-white/5'} rounded-r-sm rounded-l-md`}>
+            <div className={`mb-2 text-xs border-r-[3px] ${isMe ? 'border-white/40' : 'border-peikan-700'} pr-2 py-1 ${isMe ? 'bg-black/10' : 'bg-gray-50 dark:bg-white/5'} rounded-r-sm rounded-l-md cursor-pointer hover:opacity-80 transition-opacity`} onClick={() => {/* Scroll to message could go here */}}>
                <div className={`font-bold ${isMe ? 'text-white/90' : 'text-peikan-700 dark:text-peikan-400'}`}>پاسخ به:</div>
-               <div className="truncate opacity-70 mt-0.5">پیام قبلی...</div>
+               {renderReplyContext()}
             </div>
           )}
 
@@ -123,8 +208,9 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
                  
                  {/* Reply in Media (If full media card) */}
                  {message.replyToId && (
-                    <div className={`mx-3 mt-3 mb-2 text-xs border-r-[3px] border-peikan-500 pr-2 py-1 bg-black/40 backdrop-blur-md rounded-r-sm rounded-l-md text-white z-10 relative`}>
-                       <div className="font-bold">پاسخ به...</div>
+                    <div className={`mx-3 mt-3 mb-2 text-xs border-r-[3px] border-peikan-500 pr-2 py-1 bg-black/40 backdrop-blur-md rounded-r-sm rounded-l-md text-white z-10 relative cursor-pointer`}>
+                       <div className="font-bold">پاسخ به پیام</div>
+                       {renderReplyContext()}
                     </div>
                  )}
 
@@ -230,6 +316,26 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             </div>
           )}
         </div>
+        
+        {/* REACTION PILLS */}
+        {message.reactions && message.reactions.length > 0 && (
+            <div className={`flex flex-wrap gap-1 mt-1 -mb-1 ${isMe ? 'justify-start' : 'justify-end'}`}>
+                {message.reactions.map((reaction, idx) => (
+                    <button 
+                        key={idx}
+                        onClick={() => onReact(chatId, message.id, reaction.emoji)}
+                        className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[11px] font-bold border transition-all ${
+                            reaction.users.includes('me') // Assuming 'me' is current user ID based on constants
+                                ? 'bg-peikan-50 dark:bg-peikan-900/30 border-peikan-200 dark:border-peikan-800 text-peikan-700 dark:text-peikan-300' 
+                                : 'bg-gray-100 dark:bg-white/5 border-white dark:border-white/10 text-gray-600 dark:text-gray-300 hover:bg-gray-200'
+                        } shadow-sm`}
+                    >
+                        <span>{reaction.emoji}</span>
+                        {reaction.count > 1 && <span className="text-[10px]">{reaction.count}</span>}
+                    </button>
+                ))}
+            </div>
+        )}
 
         {/* Message Tail Vector (Only for Standard Bubbles & Last in Group) */}
         {isLastInGroup && useStandardBubble && (

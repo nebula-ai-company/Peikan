@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Smile, Paperclip, Mic, Send, Image as ImageIcon, FileText, Camera, MapPin, Search, Sticker as StickerIcon } from 'lucide-react';
+import { Smile, Paperclip, Mic, Send, Image as ImageIcon, FileText, Camera, MapPin, Search, Sticker as StickerIcon, X, Reply } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Message } from '../types';
 
 // ... (Keep existing Mock Data and Helper Components like EmojiPicker, GifPicker, StickerPicker unchanged for brevity, but I must provide full file content. Since I cannot include "..." in the final output, I will copy the mock data and components.)
 
@@ -157,11 +158,13 @@ const StickerPicker = ({ onSelect }: { onSelect: (url: string) => void }) => {
 };
 
 interface InputAreaProps {
-  onSendMessage: (text: string, type: 'text' | 'voice' | 'image' | 'file' | 'sticker' | 'gif') => void;
+  onSendMessage: (text: string, type: 'text' | 'voice' | 'image' | 'file' | 'sticker' | 'gif', replyToId?: string) => void;
   isRecording?: boolean;
+  replyingTo?: Message | null;
+  onCancelReply?: () => void;
 }
 
-const InputArea: React.FC<InputAreaProps> = ({ onSendMessage }) => {
+const InputArea: React.FC<InputAreaProps> = ({ onSendMessage, replyingTo, onCancelReply }) => {
   const [message, setMessage] = useState('');
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
@@ -191,10 +194,18 @@ const InputArea: React.FC<InputAreaProps> = ({ onSendMessage }) => {
     }
   }, [message]);
 
+  // Focus textarea when replyingTo changes
+  useEffect(() => {
+      if (replyingTo && textareaRef.current) {
+          textareaRef.current.focus();
+      }
+  }, [replyingTo]);
+
   const handleSend = () => {
     if (message.trim()) {
-      onSendMessage(message, 'text');
+      onSendMessage(message, 'text', replyingTo?.id);
       setMessage('');
+      if (onCancelReply) onCancelReply();
       if (textareaRef.current) textareaRef.current.focus();
     }
     setShowPicker(false);
@@ -202,14 +213,61 @@ const InputArea: React.FC<InputAreaProps> = ({ onSendMessage }) => {
   };
 
   const handleAttach = (type: 'image' | 'file') => {
-      onSendMessage(type === 'image' ? 'https://picsum.photos/seed/doc/600/400' : 'Document.pdf', type);
+      onSendMessage(type === 'image' ? 'https://picsum.photos/seed/doc/600/400' : 'Document.pdf', type, replyingTo?.id);
+      if (onCancelReply) onCancelReply();
       setShowAttachMenu(false);
   };
 
   const formatDuration = (sec: number) => `${Math.floor(sec / 60)}:${(sec % 60).toString().padStart(2, '0')}`;
 
+  const renderReplyPreview = () => {
+    if (!replyingTo) return null;
+    
+    let contentPreview = replyingTo.content;
+    let icon = null;
+
+    if (replyingTo.type === 'image') {
+        contentPreview = 'تصویر';
+        icon = <ImageIcon size={14} />;
+    } else if (replyingTo.type === 'voice') {
+        contentPreview = 'پیام صوتی';
+        icon = <Mic size={14} />;
+    } else if (replyingTo.type === 'file') {
+        contentPreview = replyingTo.fileName || 'فایل';
+        icon = <FileText size={14} />;
+    } else if (replyingTo.type === 'sticker') {
+        contentPreview = 'استیکر';
+        icon = <StickerIcon size={14} />;
+    }
+
+    return (
+        <motion.div 
+            initial={{ opacity: 0, y: 10, height: 0 }}
+            animate={{ opacity: 1, y: 0, height: 'auto' }}
+            exit={{ opacity: 0, y: 10, height: 0 }}
+            className="px-4 pb-2"
+        >
+            <div className="flex items-center justify-between bg-gray-100 dark:bg-[#1e1e1e] p-2 rounded-xl border-l-4 border-peikan-700 relative">
+                <div className="flex flex-col gap-0.5 overflow-hidden">
+                    <span className="text-xs font-bold text-peikan-700 dark:text-peikan-400">پاسخ به پیام</span>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 truncate flex items-center gap-1.5">
+                        {icon}
+                        <span className="truncate max-w-[200px]">{contentPreview}</span>
+                    </div>
+                </div>
+                <button 
+                    onClick={onCancelReply} 
+                    className="p-1 hover:bg-gray-200 dark:hover:bg-white/10 rounded-full transition-colors text-gray-500"
+                >
+                    <X size={16} />
+                </button>
+            </div>
+        </motion.div>
+    );
+  };
+
   return (
-    <div className="relative p-4 bg-white/95 dark:bg-[#121212]/95 backdrop-blur-xl border-t border-gray-200 dark:border-white/5 z-20">
+    <div className="relative z-20">
       
       {/* Ghost Div for Height Calculation */}
       <div 
@@ -220,79 +278,88 @@ const InputArea: React.FC<InputAreaProps> = ({ onSendMessage }) => {
           {message + '\n'}
       </div>
 
-      {/* Popovers */}
-      <AnimatePresence>
-        {showPicker && (
-            <>
-                <div className="fixed inset-0 z-30" onClick={() => setShowPicker(false)} />
-                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute bottom-full right-4 mb-2 bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-2xl border border-gray-100 dark:border-white/10 overflow-hidden z-40 w-80 h-[400px] flex flex-col">
-                    <div className="flex-1 overflow-hidden relative">
-                        {activePickerTab === 'emoji' && <EmojiPicker onSelect={(e) => setMessage(p => p + e)} />}
-                        {activePickerTab === 'gif' && <GifPicker onSelect={(url) => { onSendMessage(url, 'gif'); setShowPicker(false); }} />}
-                        {activePickerTab === 'sticker' && <StickerPicker onSelect={(url) => { onSendMessage(url, 'sticker'); setShowPicker(false); }} />}
+      <div className="bg-white/95 dark:bg-[#121212]/95 backdrop-blur-xl border-t border-gray-200 dark:border-white/5 pb-2">
+        {/* Reply Preview */}
+        <AnimatePresence>
+            {replyingTo && renderReplyPreview()}
+        </AnimatePresence>
+        
+        <div className="p-4 pt-2">
+            {/* Popovers */}
+            <AnimatePresence>
+                {showPicker && (
+                    <>
+                        <div className="fixed inset-0 z-30" onClick={() => setShowPicker(false)} />
+                        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }} className="absolute bottom-full right-4 mb-2 bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-2xl border border-gray-100 dark:border-white/10 overflow-hidden z-40 w-80 h-[400px] flex flex-col">
+                            <div className="flex-1 overflow-hidden relative">
+                                {activePickerTab === 'emoji' && <EmojiPicker onSelect={(e) => setMessage(p => p + e)} />}
+                                {activePickerTab === 'gif' && <GifPicker onSelect={(url) => { onSendMessage(url, 'gif', replyingTo?.id); if(onCancelReply) onCancelReply(); setShowPicker(false); }} />}
+                                {activePickerTab === 'sticker' && <StickerPicker onSelect={(url) => { onSendMessage(url, 'sticker', replyingTo?.id); if(onCancelReply) onCancelReply(); setShowPicker(false); }} />}
+                            </div>
+                            <div className="flex items-center justify-around border-t border-gray-100 dark:border-white/5 bg-gray-50/80 p-1">
+                                {['emoji', 'sticker', 'gif'].map((tab) => (
+                                    <button key={tab} onClick={() => setActivePickerTab(tab as any)} className={`flex-1 py-2.5 flex justify-center rounded-xl ${activePickerTab === tab ? 'bg-white shadow-sm' : 'text-gray-500'}`}>{tab === 'emoji' ? <Smile size={20}/> : tab === 'sticker' ? <StickerIcon size={20}/> : <span className="text-xs font-black">GIF</span>}</button>
+                                ))}
+                            </div>
+                        </motion.div>
+                    </>
+                )}
+                {showAttachMenu && (
+                    <>
+                        <div className="fixed inset-0 z-30" onClick={() => setShowAttachMenu(false)} />
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="absolute bottom-full right-16 mb-2 bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-2xl border border-gray-100 p-2 z-40 min-w-[180px] flex flex-col gap-1">
+                            <button onClick={() => handleAttach('image')} className="flex items-center gap-3 p-3 hover:bg-gray-100 rounded-xl text-sm font-bold w-full text-right"><ImageIcon size={18} className="text-purple-500"/>ارسال تصویر</button>
+                            <button onClick={() => handleAttach('file')} className="flex items-center gap-3 p-3 hover:bg-gray-100 rounded-xl text-sm font-bold w-full text-right"><FileText size={18} className="text-blue-500"/>ارسال فایل</button>
+                            <button className="flex items-center gap-3 p-3 hover:bg-gray-100 rounded-xl text-sm font-bold w-full text-right"><Camera size={18} className="text-red-500"/>دوربین</button>
+                            <button className="flex items-center gap-3 p-3 hover:bg-gray-100 rounded-xl text-sm font-bold w-full text-right"><MapPin size={18} className="text-green-500"/>موقعیت</button>
+                        </motion.div>
+                    </>
+                )}
+            </AnimatePresence>
+
+            {/* Main Input Row */}
+            {isRecording ? (
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between bg-red-50 dark:bg-red-900/10 rounded-2xl p-3 border border-red-100">
+                    <div className="flex items-center gap-4 text-red-600 px-2">
+                    <div className="animate-pulse w-3 h-3 bg-red-600 rounded-full"></div>
+                    <span className="font-mono font-bold">{formatDuration(recordingDuration)}</span>
                     </div>
-                    <div className="flex items-center justify-around border-t border-gray-100 dark:border-white/5 bg-gray-50/80 p-1">
-                        {['emoji', 'sticker', 'gif'].map((tab) => (
-                             <button key={tab} onClick={() => setActivePickerTab(tab as any)} className={`flex-1 py-2.5 flex justify-center rounded-xl ${activePickerTab === tab ? 'bg-white shadow-sm' : 'text-gray-500'}`}>{tab === 'emoji' ? <Smile size={20}/> : tab === 'sticker' ? <StickerIcon size={20}/> : <span className="text-xs font-black">GIF</span>}</button>
-                        ))}
+                    <div className="flex gap-3">
+                    <button onClick={() => setIsRecording(false)} className="px-4 py-2 text-gray-500 font-bold hover:bg-white/50 rounded-xl">لغو</button>
+                    <button onClick={() => { setIsRecording(false); onSendMessage('پیام صوتی (0:15)', 'voice', replyingTo?.id); if(onCancelReply) onCancelReply(); }} className="px-5 py-2 bg-red-600 text-white rounded-xl font-bold flex gap-2 items-center shadow-lg hover:bg-red-700">ارسال <Send size={16} className="rtl:rotate-180"/></button>
                     </div>
                 </motion.div>
-            </>
-        )}
-        {showAttachMenu && (
-             <>
-                <div className="fixed inset-0 z-30" onClick={() => setShowAttachMenu(false)} />
-                <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="absolute bottom-full right-16 mb-2 bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-2xl border border-gray-100 p-2 z-40 min-w-[180px] flex flex-col gap-1">
-                    <button onClick={() => handleAttach('image')} className="flex items-center gap-3 p-3 hover:bg-gray-100 rounded-xl text-sm font-bold w-full text-right"><ImageIcon size={18} className="text-purple-500"/>ارسال تصویر</button>
-                    <button onClick={() => handleAttach('file')} className="flex items-center gap-3 p-3 hover:bg-gray-100 rounded-xl text-sm font-bold w-full text-right"><FileText size={18} className="text-blue-500"/>ارسال فایل</button>
-                    <button className="flex items-center gap-3 p-3 hover:bg-gray-100 rounded-xl text-sm font-bold w-full text-right"><Camera size={18} className="text-red-500"/>دوربین</button>
-                    <button className="flex items-center gap-3 p-3 hover:bg-gray-100 rounded-xl text-sm font-bold w-full text-right"><MapPin size={18} className="text-green-500"/>موقعیت</button>
-                </motion.div>
-             </>
-        )}
-      </AnimatePresence>
-
-      {/* Main Input Row */}
-      {isRecording ? (
-          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex items-center justify-between bg-red-50 dark:bg-red-900/10 rounded-2xl p-3 border border-red-100">
-            <div className="flex items-center gap-4 text-red-600 px-2">
-              <div className="animate-pulse w-3 h-3 bg-red-600 rounded-full"></div>
-              <span className="font-mono font-bold">{formatDuration(recordingDuration)}</span>
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => setIsRecording(false)} className="px-4 py-2 text-gray-500 font-bold hover:bg-white/50 rounded-xl">لغو</button>
-              <button onClick={() => { setIsRecording(false); onSendMessage('پیام صوتی (0:15)', 'voice'); }} className="px-5 py-2 bg-red-600 text-white rounded-xl font-bold flex gap-2 items-center shadow-lg hover:bg-red-700">ارسال <Send size={16} className="rtl:rotate-180"/></button>
-            </div>
-          </motion.div>
-      ) : (
-          <div className="flex items-end gap-3 relative z-10">
-            <button onClick={() => { setShowPicker(!showPicker); setShowAttachMenu(false); }} className={`p-3 transition-colors ${showPicker ? 'text-peikan-700' : 'text-gray-400 hover:text-peikan-700'}`}><Smile size={26} strokeWidth={1.5} /></button>
-            <button onClick={() => { setShowAttachMenu(!showAttachMenu); setShowPicker(false); }} className={`p-3 transition-colors ${showAttachMenu ? 'text-peikan-700' : 'text-gray-400 hover:text-peikan-700'}`}><Paperclip size={26} strokeWidth={1.5} /></button>
-
-            {/* Input Container */}
-            <div 
-                className="flex-1 bg-gray-100 dark:bg-[#151515] rounded-[1.2rem] flex flex-col justify-center px-5 py-3.5 min-h-[56px] border border-transparent focus-within:bg-white dark:focus-within:bg-[#1a1a1a] focus-within:ring-2 focus-within:ring-peikan-700/20 focus-within:border-peikan-700/50 cursor-text shadow-inner dark:shadow-none transition-all relative"
-                onClick={() => textareaRef.current?.focus()}
-            >
-               <textarea
-                ref={textareaRef}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
-                placeholder="پیامی بنویسید..."
-                rows={1}
-                className="w-full bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-400 text-[15px] font-medium resize-none overflow-hidden relative z-20"
-                style={{ direction: 'rtl', lineHeight: '1.5', height: inputHeight }}
-              />
-            </div>
-
-            {message.trim().length > 0 ? (
-              <button onClick={handleSend} className="p-3.5 bg-peikan-700 text-white rounded-2xl hover:bg-peikan-800 transition-colors shadow-lg shadow-peikan-700/20 transform hover:scale-105 active:scale-95"><Send size={24} className="rtl:rotate-180 ml-0.5" /></button>
             ) : (
-              <button onClick={() => { setIsRecording(true); setShowPicker(false); }} className="p-3 text-gray-400 hover:text-peikan-700 transition-colors transform hover:scale-110"><Mic size={26} strokeWidth={1.5} /></button>
+                <div className="flex items-end gap-3 relative z-10">
+                    <button onClick={() => { setShowPicker(!showPicker); setShowAttachMenu(false); }} className={`p-3 transition-colors ${showPicker ? 'text-peikan-700' : 'text-gray-400 hover:text-peikan-700'}`}><Smile size={26} strokeWidth={1.5} /></button>
+                    <button onClick={() => { setShowAttachMenu(!showAttachMenu); setShowPicker(false); }} className={`p-3 transition-colors ${showAttachMenu ? 'text-peikan-700' : 'text-gray-400 hover:text-peikan-700'}`}><Paperclip size={26} strokeWidth={1.5} /></button>
+
+                    {/* Input Container */}
+                    <div 
+                        className="flex-1 bg-gray-100 dark:bg-[#151515] rounded-[1.2rem] flex flex-col justify-center px-5 py-3.5 min-h-[56px] border border-transparent focus-within:bg-white dark:focus-within:bg-[#1a1a1a] focus-within:ring-2 focus-within:ring-peikan-700/20 focus-within:border-peikan-700/50 cursor-text shadow-inner dark:shadow-none transition-all relative"
+                        onClick={() => textareaRef.current?.focus()}
+                    >
+                    <textarea
+                        ref={textareaRef}
+                        value={message}
+                        onChange={(e) => setMessage(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSend())}
+                        placeholder="پیامی بنویسید..."
+                        rows={1}
+                        className="w-full bg-transparent border-none outline-none text-gray-900 dark:text-white placeholder-gray-400 text-[15px] font-medium resize-none overflow-hidden relative z-20"
+                        style={{ direction: 'rtl', lineHeight: '1.5', height: inputHeight }}
+                    />
+                    </div>
+
+                    {message.trim().length > 0 ? (
+                    <button onClick={handleSend} className="p-3.5 bg-peikan-700 text-white rounded-2xl hover:bg-peikan-800 transition-colors shadow-lg shadow-peikan-700/20 transform hover:scale-105 active:scale-95"><Send size={24} className="rtl:rotate-180 ml-0.5" /></button>
+                    ) : (
+                    <button onClick={() => { setIsRecording(true); setShowPicker(false); }} className="p-3 text-gray-400 hover:text-peikan-700 transition-colors transform hover:scale-110"><Mic size={26} strokeWidth={1.5} /></button>
+                    )}
+                </div>
             )}
-          </div>
-      )}
+        </div>
+      </div>
     </div>
   );
 };
