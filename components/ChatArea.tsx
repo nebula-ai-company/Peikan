@@ -328,6 +328,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chat, currentUser, onSendMessage, o
                             onReact={onReact}
                             chatId={chat.id}
                             replyContext={replyContext}
+                            participants={chat.participants}
+                            currentUserId={currentUser.id}
                             messageRef={(el) => {
                                 if (el) messageRefs.current.set(msg.id, el);
                                 else messageRefs.current.delete(msg.id);

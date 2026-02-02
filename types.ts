@@ -7,11 +7,24 @@ export interface User {
   lastSeen?: string;
 }
 
+export type MessageEffect = 
+  | 'slam' 
+  | 'loud' 
+  | 'gentle' 
+  | 'invisible' 
+  | 'echo' 
+  | 'spotlight' 
+  | 'balloons' 
+  | 'confetti' 
+  | 'love' 
+  | 'lasers' 
+  | 'fireworks';
+
 export interface Message {
   id: string;
   senderId: string;
-  content: string; // text content or caption
-  type: 'text' | 'image' | 'voice' | 'file' | 'sticker' | 'gif';
+  content: string; // text content or caption. For location: "lat,lng"
+  type: 'text' | 'image' | 'voice' | 'file' | 'sticker' | 'gif' | 'location';
   timestamp: string;
   isRead: boolean;
   mediaUrl?: string; // for images/voice/files/stickers/gifs
@@ -20,6 +33,7 @@ export interface Message {
   fileSize?: string;
   replyToId?: string;
   reactions?: { emoji: string; count: number; users: string[] }[];
+  effect?: MessageEffect;
 }
 
 export interface Chat {

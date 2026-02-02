@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Chat, ViewState, Message } from './types';
+import { Chat, ViewState, Message, MessageEffect } from './types';
 import { CURRENT_USER, MOCK_CHATS, ALL_CONTACTS } from './constants';
 import Sidebar from './components/Sidebar';
 import ChatArea from './components/ChatArea';
@@ -56,7 +56,7 @@ const App: React.FC = () => {
     }
   }, [activeChatId]);
 
-  const handleSendMessage = (content: string, type: 'text' | 'voice' | 'image' | 'file' | 'sticker' | 'gif', replyToId?: string) => {
+  const handleSendMessage = (content: string, type: 'text' | 'voice' | 'image' | 'file' | 'sticker' | 'gif' | 'location', replyToId?: string, effect?: MessageEffect) => {
     if (!activeChatId) return;
 
     let messageContent = content;
@@ -92,7 +92,8 @@ const App: React.FC = () => {
       fileSize: fileSize,
       duration: type === 'voice' ? '0:05' : undefined,
       replyToId: replyToId,
-      reactions: []
+      reactions: [],
+      effect: effect
     };
 
     setChats(prevChats => prevChats.map(chat => {
