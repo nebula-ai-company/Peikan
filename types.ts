@@ -11,10 +11,10 @@ export interface Message {
   id: string;
   senderId: string;
   content: string; // text content or caption
-  type: 'text' | 'image' | 'voice' | 'file';
+  type: 'text' | 'image' | 'voice' | 'file' | 'sticker' | 'gif';
   timestamp: string;
   isRead: boolean;
-  mediaUrl?: string; // for images/voice/files
+  mediaUrl?: string; // for images/voice/files/stickers/gifs
   fileName?: string; // for files
   duration?: string; // for voice
   fileSize?: string;
@@ -24,7 +24,7 @@ export interface Message {
 
 export interface Chat {
   id: string;
-  type: 'direct' | 'group';
+  type: 'direct' | 'group' | 'channel';
   name: string; // User name or Group name
   description?: string; // Group description
   avatar: string;

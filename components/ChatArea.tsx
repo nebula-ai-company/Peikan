@@ -291,7 +291,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chat, currentUser, onSendMessage, o
                 animate={{ opacity: 1, y: 0, scale: 1 }}
                 exit={{ opacity: 0, transition: { duration: 0.1 } }}
                 transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }} // EaseOutQuint-ish
-                className="flex flex-col gap-1.5"
+                className="flex flex-col gap-2 pb-2"
             >
                 {chat.messages.map((msg, index) => {
                     const isMe = msg.senderId === currentUser.id;

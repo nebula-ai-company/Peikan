@@ -93,6 +93,71 @@ export const ALL_CONTACTS: User[] = [
 ];
 
 export const MOCK_CHATS: Chat[] = [
+  // --- CHANNELS ---
+  {
+    id: 'ch1',
+    type: 'channel',
+    name: '🚨 اخبار اضطراری',
+    description: 'کانال رسمی اطلاع‌رسانی اخبار فوری و بحران.',
+    avatar: 'https://ui-avatars.com/api/?name=Alert&background=ef4444&color=fff&size=200',
+    participants: ALL_CONTACTS, // All members
+    unreadCount: 5,
+    isPinned: true,
+    isMuted: false,
+    messages: [
+      {
+        id: 'msg_ch1_1',
+        senderId: 'admin',
+        content: 'وضعیت قرمز در منطقه ۳ اعلام شده است. لطفا از تردد غیرضروری خودداری کنید.',
+        type: 'text',
+        timestamp: '10:00',
+        isRead: true
+      }
+    ]
+  },
+  {
+    id: 'ch2',
+    type: 'channel',
+    name: '☁️ وضعیت آب و هوا',
+    description: 'گزارش لحظه‌ای وضعیت جوی و هشدارهای هواشناسی.',
+    avatar: 'https://ui-avatars.com/api/?name=Weather&background=0ea5e9&color=fff&size=200',
+    participants: ALL_CONTACTS,
+    unreadCount: 1,
+    isPinned: true,
+    isMuted: true,
+    messages: [
+        {
+        id: 'msg_ch2_1',
+        senderId: 'admin',
+        content: 'پیش‌بینی بارش شدید در ۴۸ ساعت آینده.',
+        type: 'text',
+        timestamp: '08:30',
+        isRead: true
+      }
+    ]
+  },
+  {
+    id: 'ch3',
+    type: 'channel',
+    name: '📢 تالار عمومی اعضا',
+    description: 'فضای گفتگوی آزاد برای تمام اعضای سازمان.',
+    avatar: 'https://ui-avatars.com/api/?name=General&background=8b5cf6&color=fff&size=200',
+    participants: ALL_CONTACTS,
+    unreadCount: 0,
+    isPinned: false,
+    isMuted: false,
+    messages: [
+       {
+        id: 'msg_ch3_1',
+        senderId: 'u5',
+        content: 'سلام به همه همکاران، کسی از وضعیت جاده‌ها خبر داره؟',
+        type: 'text',
+        timestamp: '09:45',
+        isRead: true
+      }
+    ]
+  },
+  // --- DIRECT & GROUPS ---
   {
     id: 'c1',
     type: 'direct',

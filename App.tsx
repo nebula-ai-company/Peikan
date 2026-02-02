@@ -34,16 +34,62 @@ const App: React.FC = () => {
     }
   }, [isDarkMode]);
 
-  const handleSendMessage = (text: string, type: 'text' | 'voice' | 'image' | 'file') => {
+  // Mark chat as read when opened
+  useEffect(() => {
+    if (activeChatId) {
+      setChats(prevChats => prevChats.map(chat => {
+        // Only update if it's the active chat and has unread messages
+        if (chat.id === activeChatId && (chat.unreadCount > 0 || chat.messages.some(m => !m.isRead && m.senderId !== CURRENT_USER.id))) {
+          return {
+            ...chat,
+            unreadCount: 0,
+            messages: chat.messages.map(msg => 
+              // Mark received messages as read
+              (msg.senderId !== CURRENT_USER.id && !msg.isRead) 
+                ? { ...msg, isRead: true } 
+                : msg
+            )
+          };
+        }
+        return chat;
+      }));
+    }
+  }, [activeChatId]);
+
+  const handleSendMessage = (content: string, type: 'text' | 'voice' | 'image' | 'file' | 'sticker' | 'gif') => {
     if (!activeChatId) return;
+
+    let messageContent = content;
+    let mediaUrl: string | undefined = undefined;
+    let fileName: string | undefined = undefined;
+    let fileSize: string | undefined = undefined;
+
+    // Logic to populate mediaUrl for non-text types
+    if (type === 'sticker') {
+        mediaUrl = content;
+        messageContent = 'Sticker';
+    } else if (type === 'gif') {
+        mediaUrl = content;
+        messageContent = 'GIF';
+    } else if (type === 'image') {
+        mediaUrl = content;
+        messageContent = 'Image';
+    } else if (type === 'file') {
+        fileName = content;
+        fileSize = '2.5 MB'; // Mock size
+        messageContent = content;
+    }
 
     const newMessage: Message = {
       id: Date.now().toString(),
       senderId: CURRENT_USER.id,
-      content: text,
+      content: messageContent,
       type: type,
       timestamp: new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' }),
       isRead: false,
+      mediaUrl: mediaUrl,
+      fileName: fileName,
+      fileSize: fileSize,
       duration: type === 'voice' ? '0:05' : undefined
     };
 

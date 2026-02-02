@@ -30,19 +30,34 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
 
   // Advanced Border Radius Logic
   const roundedClass = isMe
-    ? `${previousMessageSameSender ? 'rounded-tr-lg' : 'rounded-tr-2xl'} rounded-tl-2xl rounded-bl-2xl ${isLastInGroup ? 'rounded-br-none' : 'rounded-br-lg'}`
-    : `${previousMessageSameSender ? 'rounded-tl-lg' : 'rounded-tl-2xl'} rounded-tr-2xl rounded-br-2xl ${isLastInGroup ? 'rounded-bl-none' : 'rounded-bl-lg'}`;
+    ? `${previousMessageSameSender ? 'rounded-tr-md' : 'rounded-tr-2xl'} rounded-tl-2xl rounded-bl-2xl ${isLastInGroup ? 'rounded-br-none' : 'rounded-br-2xl'}`
+    : `${previousMessageSameSender ? 'rounded-tl-md' : 'rounded-tl-2xl'} rounded-tr-2xl rounded-br-2xl ${isLastInGroup ? 'rounded-bl-none' : 'rounded-bl-2xl'}`;
 
-  // Colors
-  const bubbleStyle = isMe
-    ? 'bg-peikan-700 text-white shadow-[0_1px_2px_rgba(13,71,161,0.1)]'
-    : 'bg-white dark:bg-[#202020] text-gray-900 dark:text-gray-100 shadow-[0_1px_2px_rgba(0,0,0,0.06)] dark:shadow-none border border-transparent dark:border-white/5';
+  // Message Type Categories
+  const isSticker = message.type === 'sticker';
+  const isVisualMedia = message.type === 'image' || message.type === 'gif';
+  const isAudioOrFile = message.type === 'voice' || message.type === 'file';
+  const isText = message.type === 'text';
+
+  // Check for Captions (Excluding default placeholders)
+  const hasCaption = isVisualMedia && message.content && !['GIF', 'Image', 'Sticker'].includes(message.content) && message.content !== message.fileName;
+  
+  // Dynamic Styling based on content type
+  // Text, Audio, File use standard bubble background and padding
+  const useStandardBubble = isText || isAudioOrFile;
+
+  const bubbleContainerClass = useStandardBubble
+    ? `px-4 py-2 ${roundedClass} ${
+        isMe
+          ? 'bg-peikan-700 text-white shadow-[0_1px_2px_rgba(13,71,161,0.1)]'
+          : 'bg-white dark:bg-[#202020] text-gray-900 dark:text-gray-100 shadow-[0_1px_2px_rgba(0,0,0,0.06)] dark:shadow-none border border-transparent dark:border-white/5'
+      }`
+    : ''; // Stickers and Visual Media handle their own containers
 
   // Helper to highlight text
   const renderContent = (content: string) => {
     if (!highlightText || !highlightText.trim()) return content;
     
-    // Escape regex special characters
     const safeHighlight = highlightText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     const parts = content.split(new RegExp(`(${safeHighlight})`, 'gi'));
     
@@ -56,11 +71,10 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
   return (
     <motion.div 
       ref={messageRef}
-      layout
       initial={{ opacity: 0, y: 8, scale: 0.98 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
-      className={`flex w-full ${alignClass} group mb-[2px] relative`}
+      className={`flex w-full ${alignClass} group mb-1 relative`}
     >
       <div className={`max-w-[85%] md:max-w-[70%] lg:max-w-[60%] flex flex-col ${alignItemsClass} relative`}>
         
@@ -71,37 +85,99 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
           </span>
         )}
 
-        <div className={`relative px-4 py-2 ${roundedClass} ${bubbleStyle} z-10 min-w-[100px]`}>
-          {/* Reply Indicator */}
-          {message.replyToId && (
+        <div className={`relative z-10 min-w-[100px] ${bubbleContainerClass}`}>
+          
+          {/* Reply Indicator (Standard Bubble) */}
+          {message.replyToId && useStandardBubble && (
             <div className={`mb-2 text-xs border-r-[3px] ${isMe ? 'border-white/40' : 'border-peikan-700'} pr-2 py-1 ${isMe ? 'bg-black/10' : 'bg-gray-50 dark:bg-white/5'} rounded-r-sm rounded-l-md`}>
                <div className={`font-bold ${isMe ? 'text-white/90' : 'text-peikan-700 dark:text-peikan-400'}`}>پاسخ به:</div>
                <div className="truncate opacity-70 mt-0.5">پیام قبلی...</div>
             </div>
           )}
 
-          {/* Content Rendering */}
-          {message.type === 'text' && (
+          {/* --- CONTENT TYPES --- */}
+
+          {/* 1. TEXT */}
+          {isText && (
             <p className="text-[15px] leading-[1.6] whitespace-pre-wrap font-normal pb-1">
               {renderContent(message.content)}
             </p>
           )}
 
-          {message.type === 'image' && (
-            <div className="-mx-2 -mt-2 mb-1">
-              <img 
-                src={message.mediaUrl} 
-                alt="attachment" 
-                className="rounded-lg min-w-[240px] max-h-80 object-cover w-full cursor-pointer hover:brightness-95 transition-all" 
-              />
-              {message.content && message.content !== message.fileName && (
-                <p className="mt-2 px-2 text-[15px] pb-1">{renderContent(message.content)}</p>
-              )}
+          {/* 2. STICKER */}
+          {isSticker && (
+            <div className="py-1">
+               <motion.img 
+                 src={message.mediaUrl} 
+                 alt="Sticker"
+                 className="w-32 h-32 md:w-44 md:h-44 object-contain drop-shadow-xl hover:scale-105 transition-transform cursor-pointer"
+                 initial={{ scale: 0.8 }}
+                 animate={{ scale: 1 }}
+               />
             </div>
           )}
 
+          {/* 3. VISUAL MEDIA (GIF / IMAGE) */}
+          {isVisualMedia && (
+             <div className={`relative overflow-hidden ${roundedClass} ${hasCaption ? (isMe ? 'bg-peikan-700' : 'bg-white dark:bg-[#202020] border border-gray-100 dark:border-white/5') : ''} shadow-sm transition-all group/media`}>
+                 
+                 {/* Reply in Media (If full media card) */}
+                 {message.replyToId && (
+                    <div className={`mx-3 mt-3 mb-2 text-xs border-r-[3px] border-peikan-500 pr-2 py-1 bg-black/40 backdrop-blur-md rounded-r-sm rounded-l-md text-white z-10 relative`}>
+                       <div className="font-bold">پاسخ به...</div>
+                    </div>
+                 )}
+
+                 {/* Image Container */}
+                 <div className="relative">
+                    <img 
+                      src={message.mediaUrl} 
+                      alt="attachment"
+                      className={`block w-full h-auto object-cover max-w-md max-h-[500px] min-w-[200px] min-h-[150px] cursor-pointer hover:brightness-95 transition-all bg-gray-100 dark:bg-white/5 ${hasCaption ? '' : roundedClass}`}
+                    />
+                    
+                    {/* GIF Badge - Improved UI */}
+                    {message.type === 'gif' && (
+                        <div className="absolute top-3 left-3 bg-black/30 backdrop-blur-md border border-white/20 text-white text-[10px] font-black px-2 py-1 rounded-lg tracking-widest shadow-lg flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse"></span>
+                            GIF
+                        </div>
+                    )}
+
+                    {/* Gradient Overlay for timestamp readability when no caption */}
+                    {!hasCaption && (
+                       <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/70 via-black/20 to-transparent opacity-100 transition-opacity duration-300 pointer-events-none"></div>
+                    )}
+                 </div>
+
+                 {/* Caption Area */}
+                 {hasCaption && (
+                    <div className={`px-3 pt-2 pb-3 ${isMe ? 'text-white' : 'text-gray-900 dark:text-gray-100'}`}>
+                        <p className="text-[15px] leading-relaxed dir-auto whitespace-pre-wrap">{renderContent(message.content)}</p>
+                    </div>
+                 )}
+
+                 {/* Timestamp & Status Overlay/Inline */}
+                 <div className={`flex items-center gap-1 select-none pointer-events-none ${
+                    hasCaption 
+                        ? `justify-end px-3 pb-2 opacity-80 ${isMe ? 'text-white/80' : 'text-gray-400'}` 
+                        : 'absolute bottom-2 right-2 px-2 py-1 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white shadow-sm'
+                 }`}>
+                     <span className="text-[10px] font-bold tracking-wide">
+                        {message.timestamp}
+                     </span>
+                     {isMe && (
+                        <span>
+                             {message.isRead ? <CheckCheck size={14} /> : <Check size={14} />}
+                        </span>
+                     )}
+                 </div>
+             </div>
+          )}
+
+          {/* 4. FILE */}
           {message.type === 'file' && (
-            <div className={`flex items-center gap-3 p-3 rounded-xl ${isMe ? 'bg-white/10 border border-white/20' : 'bg-gray-50 dark:bg-white/5 border border-gray-100 dark:border-white/5'}`}>
+            <div className="flex items-center gap-3 py-1">
               <div className={`p-2.5 rounded-full ${isMe ? 'bg-white/20 text-white' : 'bg-peikan-50 dark:bg-peikan-900/30 text-peikan-700 dark:text-peikan-300'}`}>
                 <Download size={20} />
               </div>
@@ -112,6 +188,7 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             </div>
           )}
 
+          {/* 5. VOICE */}
           {message.type === 'voice' && (
             <div className="flex items-center gap-3 min-w-[260px] py-1.5">
               <button 
@@ -139,21 +216,23 @@ const MessageBubble: React.FC<MessageBubbleProps> = ({
             </div>
           )}
 
-          {/* Footer: Time & Status */}
-          <div className={`flex items-center justify-end gap-1 mt-0.5 select-none ${message.type === 'image' ? 'absolute bottom-2 right-2 bg-black/40 px-2 py-0.5 rounded-full text-white backdrop-blur-md border border-white/10' : ''}`}>
-            <span className={`text-[10px] font-medium tracking-wide ${isMe || message.type === 'image' ? 'text-white/80' : 'text-gray-400'}`}>
-              {message.timestamp}
-            </span>
-            {isMe && (
-              <span className={message.type === 'image' ? 'text-white' : 'text-white/90'}>
-                {message.isRead ? <CheckCheck size={15} strokeWidth={2} /> : <Check size={15} strokeWidth={2} />}
-              </span>
-            )}
-          </div>
+          {/* Footer: Time & Status (Only for Standard Bubbles) */}
+          {useStandardBubble && (
+            <div className="flex items-center justify-end gap-1 mt-1 select-none opacity-80">
+                <span className={`text-[10px] font-medium tracking-wide ${isMe ? 'text-white/90' : 'text-gray-400'}`}>
+                {message.timestamp}
+                </span>
+                {isMe && (
+                <span className="text-white/90">
+                    {message.isRead ? <CheckCheck size={15} strokeWidth={2} /> : <Check size={15} strokeWidth={2} />}
+                </span>
+                )}
+            </div>
+          )}
         </div>
 
-        {/* Message Tail Vector */}
-        {isLastInGroup && (
+        {/* Message Tail Vector (Only for Standard Bubbles & Last in Group) */}
+        {isLastInGroup && useStandardBubble && (
            <div className={`absolute bottom-0 w-3 h-3 z-0 ${isMe ? '-right-[5px]' : '-left-[5px]'}`}>
               {isMe ? (
                 // Right Tail (Me)
