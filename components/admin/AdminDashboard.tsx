@@ -220,7 +220,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ chats, onUpdateChats, o
                             />
                         )}
 
-                        {activeTab === 'activities' && <Activities />}
+                        {activeTab === 'activities' && <Activities companies={companies} />}
 
                         {activeTab === 'companies' && <Companies companies={companies} />}
 
