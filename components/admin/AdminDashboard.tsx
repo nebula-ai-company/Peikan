@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Chat, Company, RegistrationRequest } from '../../types';
-import { MOCK_COMPANIES, MOCK_REQUESTS } from '../../constants';
+import { MOCK_COMPANIES, MOCK_REQUESTS, ALL_CONTACTS } from '../../constants';
 import { 
     LayoutDashboard, Users, Building2, Radio, Megaphone, Settings, LogOut, 
     Search, Plus, ShieldCheck, Activity
@@ -65,6 +65,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ chats, onUpdateChats, o
 
     const handleRejectRequest = (id: string) => {
         setRequests(prev => prev.map(req => req.id === id ? { ...req, status: 'rejected' } : req));
+    };
+
+    const handleClearRequests = () => {
+        setRequests([]);
     };
 
     const handleSendBroadcast = () => {
@@ -208,8 +212,11 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ chats, onUpdateChats, o
                         {activeTab === 'members' && (
                             <MemberManagement 
                                 requests={requests} 
+                                users={ALL_CONTACTS}
+                                companies={companies}
                                 onApprove={handleApproveRequest} 
                                 onReject={handleRejectRequest} 
+                                onClearRequests={handleClearRequests}
                             />
                         )}
 
