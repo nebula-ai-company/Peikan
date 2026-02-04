@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Chat, ViewState, Message, MessageEffect } from './types';
 import { CURRENT_USER, MOCK_CHATS, ALL_CONTACTS } from './constants';
@@ -12,6 +13,7 @@ import SettingsModal from './components/SettingsModal';
 import ContactsModal from './components/ContactsModal';
 import CreateGroupModal from './components/CreateGroupModal';
 import AddMemberModal from './components/AddMemberModal';
+import AdminDashboard from './components/admin/AdminDashboard';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const App: React.FC = () => {
@@ -296,6 +298,18 @@ const App: React.FC = () => {
 
   const activeChat = chats.find(c => c.id === activeChatId);
 
+  // ADMIN VIEW
+  if (viewState === 'admin') {
+      return (
+          <AdminDashboard 
+            chats={chats} 
+            onUpdateChats={setChats} 
+            onLogout={() => setViewState('login')} 
+          />
+      );
+  }
+
+  // AUTH VIEW
   const isAuthView = ['login', 'register', 'forgot-password'].includes(viewState);
 
   if (isAuthView) {
@@ -306,7 +320,11 @@ const App: React.FC = () => {
           <AnimatePresence mode="wait">
             {viewState === 'login' && (
               <motion.div key="login" className="w-full h-full" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}>
-                <Login onLogin={() => setViewState('chat')} onNavigateToRegister={() => setViewState('register')} onNavigateToForgot={() => setViewState('forgot-password')} />
+                <Login 
+                    onLogin={(isAdmin) => setViewState(isAdmin ? 'admin' : 'chat')} 
+                    onNavigateToRegister={() => setViewState('register')} 
+                    onNavigateToForgot={() => setViewState('forgot-password')} 
+                />
               </motion.div>
             )}
             {viewState === 'register' && (

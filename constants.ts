@@ -1,4 +1,5 @@
-import { Chat, User } from './types';
+
+import { Chat, User, Company, RegistrationRequest } from './types';
 
 export const CURRENT_USER: User = {
   id: 'me',
@@ -262,4 +263,68 @@ export const MOCK_CHATS: Chat[] = [
       }
     ]
   }
+];
+
+// --- ADMIN MOCK DATA ---
+export const MOCK_COMPANIES: Company[] = [
+    {
+        id: 'comp1',
+        name: 'دیجی‌کالا',
+        logo: 'https://ui-avatars.com/api/?name=Digikala&background=ef394e&color=fff',
+        employeeCount: 1250,
+        status: 'active',
+        plan: 'enterprise',
+        registeredAt: '۱۴۰۲/۰۱/۱۵'
+    },
+    {
+        id: 'comp2',
+        name: 'اسنپ',
+        logo: 'https://ui-avatars.com/api/?name=Snapp&background=00d16f&color=fff',
+        employeeCount: 3400,
+        status: 'active',
+        plan: 'enterprise',
+        registeredAt: '۱۴۰۱/۱۱/۲۰'
+    },
+    {
+        id: 'comp3',
+        name: 'کافه بازار',
+        logo: 'https://ui-avatars.com/api/?name=CafeBazaar&background=4caf50&color=fff',
+        employeeCount: 450,
+        status: 'inactive',
+        plan: 'basic',
+        registeredAt: '۱۴۰۲/۰۵/۱۰'
+    }
+];
+
+export const MOCK_REQUESTS: RegistrationRequest[] = [
+    {
+        id: 'req1',
+        name: 'محمد رضایی',
+        email: 'mohammad@startups.ir',
+        phone: '09121112233',
+        companyName: 'نوآوران شریف',
+        reason: 'نیاز به پلتفرم امن برای ارتباط داخلی تیم فنی',
+        status: 'pending',
+        date: '۱۴۰۲/۰۸/۰۱'
+    },
+    {
+        id: 'req2',
+        name: 'لیلا امینی',
+        email: 'leila.amini@design.co',
+        phone: '09358889900',
+        companyName: 'استودیو طراحی نگار',
+        reason: 'مدیریت پروژه‌های طراحی و ارسال فایل‌های حجیم',
+        status: 'pending',
+        date: '۱۴۰۲/۰۸/۰۲'
+    },
+    {
+        id: 'req3',
+        name: 'فرهاد مجیدی',
+        email: 'farhad@tech.com',
+        phone: '09191234567',
+        companyName: 'تک سیستم',
+        reason: 'تست سیستم',
+        status: 'rejected',
+        date: '۱۴۰۲/۰۷/۲۹'
+    }
 ];

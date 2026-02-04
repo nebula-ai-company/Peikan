@@ -1,3 +1,4 @@
+
 export interface User {
   id: string;
   name: string;
@@ -5,6 +6,8 @@ export interface User {
   status: 'online' | 'offline' | 'away' | 'busy';
   bio?: string;
   lastSeen?: string;
+  companyId?: string; // Link user to a company
+  role?: 'admin' | 'user';
 }
 
 export type MessageEffect = 
@@ -52,5 +55,26 @@ export interface Chat {
   draft?: string;
 }
 
-export type ViewState = 'login' | 'chat' | 'register' | 'forgot-password';
+export interface Company {
+  id: string;
+  name: string;
+  logo: string;
+  employeeCount: number;
+  status: 'active' | 'inactive';
+  plan: 'basic' | 'enterprise';
+  registeredAt: string;
+}
+
+export interface RegistrationRequest {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  companyName: string;
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  date: string;
+}
+
+export type ViewState = 'login' | 'chat' | 'register' | 'forgot-password' | 'admin';
 export type Theme = 'light' | 'dark';

@@ -1,14 +1,26 @@
+
 import React, { useState } from 'react';
 import { ArrowLeft, MessageSquare, Lock, Mail, Key, Eye, EyeOff } from 'lucide-react';
 
 interface LoginProps {
-  onLogin: () => void;
+  onLogin: (isAdmin?: boolean) => void;
   onNavigateToRegister: () => void;
   onNavigateToForgot: () => void;
 }
 
 const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToRegister, onNavigateToForgot }) => {
   const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+  const handleLoginSubmit = () => {
+      // Updated Admin Password
+      if (email === 'admin@peikan.ir' && password === 'PeikanFaghatPeikanJavananModel1370') {
+          onLogin(true); // Is Admin
+      } else {
+          onLogin(false); // Regular User
+      }
+  };
 
   return (
     // Container handles centering and scrolling, removed outer layout wrapper
@@ -28,7 +40,7 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToRegister, onNavigate
                 </p>
             </div>
 
-            <form onSubmit={(e) => { e.preventDefault(); onLogin(); }} className="space-y-6">
+            <form onSubmit={(e) => { e.preventDefault(); handleLoginSubmit(); }} className="space-y-6">
                 <div className="space-y-2">
                     <label className="text-sm font-bold text-gray-800 dark:text-gray-200 block">
                         ایمیل سازمانی
@@ -39,6 +51,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToRegister, onNavigate
                         </div>
                         <input 
                             type="email" 
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                             className="w-full pl-12 pr-4 py-4 rounded-xl bg-gray-50 dark:bg-[#1a1a1a] border-2 border-gray-100 dark:border-dark-border focus:border-peikan-700 focus:bg-white dark:focus:bg-dark-surface focus:ring-4 focus:ring-peikan-700/10 outline-none transition-all text-left dir-ltr font-sans text-lg text-gray-900 dark:text-white placeholder-gray-300 font-medium"
                             placeholder="name@company.com"
                             autoFocus
@@ -76,6 +90,8 @@ const Login: React.FC<LoginProps> = ({ onLogin, onNavigateToRegister, onNavigate
 
                         <input 
                             type={showPassword ? "text" : "password"}
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
                             className="w-full pl-12 pr-12 py-4 rounded-xl bg-gray-50 dark:bg-[#1a1a1a] border-2 border-gray-100 dark:border-dark-border focus:border-peikan-700 focus:bg-white dark:focus:bg-dark-surface focus:ring-4 focus:ring-peikan-700/10 outline-none transition-all text-left dir-ltr font-sans text-lg text-gray-900 dark:text-white placeholder-gray-300 font-medium tracking-widest"
                             placeholder="••••••••"
                         />
