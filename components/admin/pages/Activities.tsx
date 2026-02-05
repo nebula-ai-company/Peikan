@@ -7,6 +7,7 @@ import {
     Image as ImageIcon, Video, Music, ArrowUp, ArrowDown
 } from 'lucide-react';
 import UserDetailsModal from './member/UserDetailsModal';
+import Toast from '../../Toast';
 import { Company, User } from '../../../types';
 
 interface ActivitiesProps {
@@ -245,6 +246,7 @@ const Activities: React.FC<ActivitiesProps> = ({ companies = [] }) => {
     const [filter, setFilter] = useState('all');
     const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
     const [selectedUser, setSelectedUser] = useState<User | null>(null);
+    const [showExportSuccess, setShowExportSuccess] = useState(false);
 
     const handleSort = (key: string) => {
         let direction: 'asc' | 'desc' = 'desc'; // Default to desc for stats
@@ -288,6 +290,34 @@ const Activities: React.FC<ActivitiesProps> = ({ companies = [] }) => {
         }
         return sortableItems;
     }, [sortConfig, filter]);
+
+    const handleExportExcel = () => {
+        const headers = ['نام', 'نقش', 'پیام‌ها', 'مدت آنلاین', 'فایل‌ها', 'وضعیت', 'روند'];
+        const csvContent = [
+            headers.join(','),
+            ...sortedActivities.map(row => [
+                `"${row.name}"`, 
+                `"${row.role}"`, 
+                row.messages, 
+                `"${row.online}"`, 
+                row.files, 
+                `"${row.status === 'online' ? 'آنلاین' : row.status === 'busy' ? 'مشغول' : row.status === 'away' ? 'عدم حضور' : 'آفلاین'}"`, 
+                `"${row.trend}"`
+            ].join(','))
+        ].join('\n');
+
+        // Add Byte Order Mark (BOM) for correct Persian encoding in Excel
+        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', `activities_export_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        setShowExportSuccess(true);
+    };
 
     const handleUserClick = (activityUser: typeof MOCK_ACTIVITIES[0]) => {
         const fullUser: User = {
@@ -339,6 +369,13 @@ const Activities: React.FC<ActivitiesProps> = ({ companies = [] }) => {
     return (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-8 pb-10">
             
+            <Toast 
+                message="خروجی اکسل با موفقیت دانلود شد" 
+                isVisible={showExportSuccess} 
+                onClose={() => setShowExportSuccess(false)} 
+                type="success"
+            />
+
             <AnimatePresence>
                 {selectedUser && (
                     <UserDetailsModal 
@@ -449,7 +486,10 @@ const Activities: React.FC<ActivitiesProps> = ({ companies = [] }) => {
                                 <option value="inactive">کم‌کارها</option>
                             </select>
                         </div>
-                        <button className="flex items-center gap-2 px-4 py-2.5 bg-peikan-50 dark:bg-peikan-900/20 text-peikan-700 dark:text-peikan-400 rounded-xl text-xs font-bold hover:bg-peikan-100 dark:hover:bg-peikan-900/30 transition-colors border border-peikan-100 dark:border-peikan-900/30">
+                        <button 
+                            onClick={handleExportExcel}
+                            className="flex items-center gap-2 px-4 py-2.5 bg-peikan-50 dark:bg-peikan-900/20 text-peikan-700 dark:text-peikan-400 rounded-xl text-xs font-bold hover:bg-peikan-100 dark:hover:bg-peikan-900/30 transition-colors border border-peikan-100 dark:border-peikan-900/30"
+                        >
                             <Download size={16} />
                             خروجی اکسل
                         </button>
