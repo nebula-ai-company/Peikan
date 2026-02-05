@@ -9,6 +9,7 @@ export interface User {
   lastSeen?: string;
   companyId?: string; // Link user to a company
   role?: 'admin' | 'user';
+  password?: string; // Optional for new user creation flow
 }
 
 export type MessageEffect = 
@@ -64,6 +65,13 @@ export interface Company {
   status: 'active' | 'inactive';
   plan: 'basic' | 'enterprise';
   registeredAt: string;
+  // Extended Details
+  industry?: string;
+  website?: string;
+  phone?: string;
+  address?: string;
+  contactPerson?: string;
+  contactEmail?: string;
 }
 
 export interface RegistrationRequest {
