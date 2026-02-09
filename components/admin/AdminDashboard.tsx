@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Chat, Company, RegistrationRequest } from '../../types';
 import { MOCK_COMPANIES, MOCK_REQUESTS, ALL_CONTACTS } from '../../constants';
 import { 
-    LayoutDashboard, Users, Building2, Radio, Megaphone, Settings, LogOut, 
+    LayoutDashboard, Users, Building2, Radio, Settings, LogOut, 
     Search, Plus, ShieldCheck, Activity
 } from 'lucide-react';
 
@@ -13,7 +13,6 @@ import Overview from './pages/Overview';
 import MemberManagement from './pages/MemberManagement';
 import Companies from './pages/Companies';
 import Channels from './pages/Channels';
-import Broadcast from './pages/Broadcast';
 import Activities from './pages/Activities';
 
 interface AdminDashboardProps {
@@ -22,7 +21,7 @@ interface AdminDashboardProps {
     onLogout: () => void;
 }
 
-type AdminTab = 'overview' | 'members' | 'companies' | 'channels' | 'broadcast' | 'activities';
+type AdminTab = 'overview' | 'members' | 'companies' | 'channels' | 'activities';
 
 // --- SUB-COMPONENTS ---
 
@@ -51,10 +50,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ chats, onUpdateChats, o
     const [requests, setRequests] = useState<RegistrationRequest[]>(MOCK_REQUESTS);
     const [companies, setCompanies] = useState<Company[]>(MOCK_COMPANIES);
     
-    // Broadcast State
-    const [broadcastMessage, setBroadcastMessage] = useState('');
-    const [broadcastTarget, setBroadcastTarget] = useState<string>('all'); 
-
     // Channel Creation State
     const [newChannelName, setNewChannelName] = useState('');
     const [newChannelDesc, setNewChannelDesc] = useState('');
@@ -69,38 +64,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ chats, onUpdateChats, o
 
     const handleClearRequests = () => {
         setRequests([]);
-    };
-
-    const handleSendBroadcast = () => {
-        if (!broadcastMessage.trim()) return;
-
-        let targetChats = chats;
-        const createMsg = () => ({
-            id: `sys_${Date.now()}_${Math.random()}`,
-            senderId: 'admin',
-            content: broadcastMessage,
-            type: 'text' as const,
-            timestamp: new Date().toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' }),
-            isRead: true
-        });
-
-        if (broadcastTarget === 'all') {
-            targetChats = chats.map(chat => 
-                chat.type === 'channel' 
-                ? { ...chat, messages: [...chat.messages, createMsg()], unreadCount: chat.unreadCount + 1 } 
-                : chat
-            );
-        } else {
-            targetChats = chats.map(chat => 
-                chat.id === broadcastTarget 
-                ? { ...chat, messages: [...chat.messages, createMsg()], unreadCount: chat.unreadCount + 1 } 
-                : chat
-            );
-        }
-
-        onUpdateChats(targetChats);
-        setBroadcastMessage('');
-        alert('پیام با موفقیت ارسال شد');
     };
 
     const handleCreateChannel = () => {
@@ -124,6 +87,14 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ chats, onUpdateChats, o
         setNewChannelName('');
         setNewChannelDesc('');
         alert('کانال با موفقیت ایجاد شد');
+    };
+
+    const handleUpdateChannel = (updatedChannel: Chat) => {
+        onUpdateChats(chats.map(c => c.id === updatedChannel.id ? updatedChannel : c));
+    };
+
+    const handleDeleteChannel = (id: string) => {
+        onUpdateChats(chats.filter(c => c.id !== id));
     };
 
     const pendingCount = requests.filter(r => r.status === 'pending').length;
@@ -160,9 +131,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ chats, onUpdateChats, o
                     <p className="px-4 text-xs font-bold text-gray-400 mb-2 mt-6">مدیریت</p>
                     <SidebarItem id="companies" active={activeTab === 'companies'} icon={Building2} label="شرکت‌ها و سازمان‌ها" onClick={setActiveTab} />
                     <SidebarItem id="channels" active={activeTab === 'channels'} icon={Radio} label="مدیریت کانال‌ها" onClick={setActiveTab} />
-                    
-                    <p className="px-4 text-xs font-bold text-gray-400 mb-2 mt-6">ارتباطات</p>
-                    <SidebarItem id="broadcast" active={activeTab === 'broadcast'} icon={Megaphone} label="اعلان سراسری" onClick={setActiveTab} />
                 </nav>
 
                 {/* User Profile Footer */}
@@ -196,7 +164,6 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ chats, onUpdateChats, o
                             {activeTab === 'activities' && 'گزارش فعالیت کاربران'}
                             {activeTab === 'companies' && 'سازمان‌های عضو'}
                             {activeTab === 'channels' && 'کانال‌های عمومی'}
-                            {activeTab === 'broadcast' && 'مرکز پیام'}
                         </h2>
                     </div>
                     
@@ -232,17 +199,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ chats, onUpdateChats, o
                                 onNameChange={setNewChannelName}
                                 onDescChange={setNewChannelDesc}
                                 onCreate={handleCreateChannel}
-                            />
-                        )}
-
-                        {activeTab === 'broadcast' && (
-                            <Broadcast 
-                                chats={chats}
-                                message={broadcastMessage}
-                                target={broadcastTarget}
-                                onMessageChange={setBroadcastMessage}
-                                onTargetChange={setBroadcastTarget}
-                                onSend={handleSendBroadcast}
+                                onUpdateChannel={handleUpdateChannel}
+                                onDeleteChannel={handleDeleteChannel}
                             />
                         )}
                     </AnimatePresence>
